@@ -1,0 +1,59 @@
+﻿<Page x:Name="Preferences" x:Class="MovieEncoder.PreferencesPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:MovieEncoder"
+      mc:Ignorable="d" d:DesignWidth="800"
+      Title="Preferences">
+    <Grid Margin="0,0,0,10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="290"/>
+            <RowDefinition Height="50*" MinHeight="50"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Column="0" Grid.Row="0" Padding="5" Background="#4E87D4" Margin="10,0,10,0">
+            <Label VerticalAlignment="Center" Foreground="White" Content="Preferences"/>
+        </Border>
+
+        <GroupBox Header="MakeMKV" Height="122" Margin="10,10,10,0" Grid.Row="1" VerticalAlignment="Top">
+            <Grid>
+                <TextBlock HorizontalAlignment="Left" Margin="10,8,0,0" TextWrapping="Wrap" Text="MakeMKVcon.exe:" VerticalAlignment="Top"/>
+                <TextBox x:Name="MakeMkvPathText" Height="22" Margin="112,5,45,0" TextWrapping="Wrap" VerticalAlignment="Top" IsEnabled="{Binding ElementName=Preferences,Path=IsServiceStopped}" Text="{Binding MakeMkvConExePath}"/>
+                <Button x:Name="makeMkvButton" Content="..." Margin="0,6,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" Click="MakeMkvButton_Click" Grid.Row="1" IsEnabled="{Binding ElementName=Preferences,Path=IsServiceStopped}"/>
+
+                <CheckBox x:Name="MakeMkvBackupAllCheckBox" Content="Backup All" HorizontalAlignment="Left" Margin="112,52,0,0" VerticalAlignment="Top" IsEnabled="{Binding IsBackupAllEnabled}" IsChecked="{Binding MakeMkvBackupAll}" RenderTransformOrigin="0.416,-1.792"/>
+
+                <TextBlock HorizontalAlignment="Left" Margin="10,75,0,0" TextWrapping="Wrap" Text="Output Dir:" VerticalAlignment="Top" IsEnabled="{Binding ElementName=Preferences,Path=IsMakeMkvOutputDirEnabled}"/>
+                <TextBox x:Name="MakeMkvAllDestDirText" Height="22" Margin="112,72,45,0" TextWrapping="Wrap" VerticalAlignment="Top"  IsEnabled="{Binding ElementName=Preferences,Path=IsMakeMkvOutputDirEnabled}" Text="{Binding MakeMkvOutDir}"/>
+                <Button x:Name="makeMkvAllDestDirButton" Content="..." Margin="0,73,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" Click="MakeMkvAllDestDirButton_Click" RenderTransformOrigin="0.442,-1.245" IsEnabled="{Binding ElementName=Preferences,Path=IsMakeMkvOutputDirEnabled}"/>
+                <CheckBox x:Name="MakeMkvKeepCheckBox" Content="Keep Movies" HorizontalAlignment="Left" Margin="112,32,0,0" VerticalAlignment="Top" IsEnabled="{Binding IsServiceStopped}" IsChecked="{Binding MakeMkvKeepFiles}"/>
+            </Grid>
+        </GroupBox>
+
+        <GroupBox Header="HandBrake" Height="144.298" Margin="10,135.702,10,0" Grid.Row="1" VerticalAlignment="Top">
+            <Grid>
+                <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="HandBrakeCLI.exe:" VerticalAlignment="Top" Margin="10,8,0,0"/>
+                <TextBox x:Name="HandBrakeCliPathText" Height="22"  TextWrapping="Wrap" VerticalAlignment="Top" Margin="112,5,45,0" IsEnabled="{Binding IsServiceStopped}" Text="{Binding HandBrakeCliExePath}"/>
+                <Button x:Name="handbrakeButton" Content="..."  VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" Click="HandbrakeButton_Click" RenderTransformOrigin="0.424,-6.196" Margin="0,6,0,0" IsEnabled="{Binding ElementName=Preferences,Path=IsServiceStopped}"/>
+
+                <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="HandBrake Profile:" VerticalAlignment="Top" Margin="10,35,0,0"/>
+                <TextBox x:Name="HandBrakeProfileFileText" Height="22"  TextWrapping="Wrap" VerticalAlignment="Top" Margin="112,32,45,0" IsEnabled="{Binding IsServiceStopped}" Text="{Binding HandBrakeProfileFile}"/>
+                <Button x:Name="handbrakeProfileFileButton" Content="..." Margin="0,33,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" Click="HandbrakeProfileFileButton_Click" IsEnabled="{Binding ElementName=Preferences,Path=IsServiceStopped}"/>
+
+                <TextBlock HorizontalAlignment="Left" Margin="10,97.421,0,0" TextWrapping="Wrap" Text="Output Dir:" VerticalAlignment="Top"/>
+                <TextBox x:Name="HandBrakeOutDirText" Height="22" Margin="112,94.437,45,0" TextWrapping="Wrap" VerticalAlignment="Top" IsEnabled="{Binding IsServiceStopped}" Text="{Binding HandBrakeOutDir}"/>
+                <Button x:Name="handbrakeOutDirButton" Content="..." Margin="0,95.421,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" Click="HandbrakeOutDirButton_Click" IsEnabled="{Binding ElementName=Preferences,Path=IsServiceStopped}"/>
+                <TextBlock HorizontalAlignment="Left" Margin="10,62,0,0" TextWrapping="Wrap" Text="Source Dir:" VerticalAlignment="Top"/>
+                <TextBox x:Name="MkvSourceDirText" Height="22" Margin="112,59,45,0" TextWrapping="Wrap" VerticalAlignment="Top" IsEnabled="{Binding IsServiceStopped}" Text="{Binding HandBrakeSourceDir}"/>
+                <Button x:Name="mkvSourceDirButton" Content="..." Margin="0,60,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" Click="MkvSourceDirButton_Click" IsEnabled="{Binding IsServiceStopped, ElementName=Preferences}"/>
+                <TextBlock HorizontalAlignment="Left" Margin="112.649,81,0,0" TextWrapping="Wrap" Text="Files will be deleted after encoding" VerticalAlignment="Top" FontSize="9" Width="189.563" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+            </Grid>
+        </GroupBox>
+        <Button x:Name="startEncoding" Grid.Column="0" Grid.Row="2" Margin="0,0,10,0" Width="125" HorizontalAlignment="Right" Content="{Binding StartEncodingButtonText, ElementName=Preferences}" Click="StartEncoding_Click" Height="25" VerticalAlignment="Bottom"/>
+    </Grid>
+</Page>
