@@ -15,32 +15,32 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_38A2E1B5BD6DECD5733D2E34F1446338"
-        "OwnerKey" = "8:_526F5FD771BE4D0CB6DE4D2F40683626"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_46127BCE2DBDB35728D35F212E8B76CF"
-        "OwnerKey" = "8:_526F5FD771BE4D0CB6DE4D2F40683626"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_526F5FD771BE4D0CB6DE4D2F40683626"
+        "MsmKey" = "8:_0A1CD3EF75944648A14BA60175547842"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
+        "MsmKey" = "8:_38A2E1B5BD6DECD5733D2E34F1446338"
+        "OwnerKey" = "8:_0A1CD3EF75944648A14BA60175547842"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_46127BCE2DBDB35728D35F212E8B76CF"
+        "OwnerKey" = "8:_0A1CD3EF75944648A14BA60175547842"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_7F8EADD974F4300F10AF3B4410E9EAEE"
-        "OwnerKey" = "8:_526F5FD771BE4D0CB6DE4D2F40683626"
+        "OwnerKey" = "8:_0A1CD3EF75944648A14BA60175547842"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_A478309EB4A380608A64BDE41BAFA32F"
-        "OwnerKey" = "8:_526F5FD771BE4D0CB6DE4D2F40683626"
+        "OwnerKey" = "8:_0A1CD3EF75944648A14BA60175547842"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -52,7 +52,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_526F5FD771BE4D0CB6DE4D2F40683626"
+        "OwnerKey" = "8:_0A1CD3EF75944648A14BA60175547842"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -91,6 +91,14 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+            }
         }
         "Release"
         {
@@ -107,6 +115,22 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
+            }
         }
     }
     "Deployable"
@@ -328,7 +352,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:MovieEncoderInstaller"
         "ProductCode" = "8:{3A17418A-0FE9-456A-9CED-35B97896C94A}"
-        "PackageCode" = "8:{E99BF9BD-92EC-4A01-BCDA-3E514E5834E2}"
+        "PackageCode" = "8:{32954971-F477-4873-821B-123D89FC726B}"
         "UpgradeCode" = "8:{495FA425-367E-4ECC-A472-D0CBECF8B201}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
@@ -448,7 +472,7 @@
         }
         "Shortcut"
         {
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_AF07F9B8A29F46BCA5986B0340D8F77E"
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_746E629125744278B8D6FF8C39572A7F"
             {
             "Name" = "8:Movie Encoder"
             "Arguments" = "8:"
@@ -456,13 +480,13 @@
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
-            "Target" = "8:_526F5FD771BE4D0CB6DE4D2F40683626"
+            "Target" = "8:_0A1CD3EF75944648A14BA60175547842"
             "Folder" = "8:_793BD424072340FCBD25C0B42B8E39C9"
             "WorkingFolder" = "8:_39A53492C93C4F20A0D05F895D19AB13"
             "Icon" = "8:"
             "Feature" = "8:"
             }
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_FBB3CED8FCC948D0B0A74F1EBA63DF99"
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_997A2CBFBE724229A931914ABB76085C"
             {
             "Name" = "8:Movie Encoder"
             "Arguments" = "8:"
@@ -470,7 +494,7 @@
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
-            "Target" = "8:_526F5FD771BE4D0CB6DE4D2F40683626"
+            "Target" = "8:_0A1CD3EF75944648A14BA60175547842"
             "Folder" = "8:_D3C7C7C7128A4AA598AC46838FF98142"
             "WorkingFolder" = "8:_39A53492C93C4F20A0D05F895D19AB13"
             "Icon" = "8:"
@@ -875,9 +899,9 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_526F5FD771BE4D0CB6DE4D2F40683626"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_0A1CD3EF75944648A14BA60175547842"
             {
-            "SourcePath" = "8:..\\MovieEncoder\\obj\\Debug\\MovieEncoder.exe"
+            "SourcePath" = "8:..\\MovieEncoder\\obj\\Release\\MovieEncoder.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_39A53492C93C4F20A0D05F895D19AB13"
