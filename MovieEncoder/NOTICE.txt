@@ -1,2 +1,5 @@
 Movie Encoder
 Copyright 2020 Ben Owen
+
+Movie Icon copyright Babasse. Downloaded from https://iconarchive.com/show/old-school-icons-by-babasse/bobines-video-icon.html.
+Licensed under CC Attribution-Noncommercial-No Derivate 4.0 https://creativecommons.org/licenses/by-nc-nd/4.0/

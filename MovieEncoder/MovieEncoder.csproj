@@ -37,6 +37,9 @@
   <PropertyGroup>
     <StartupObject>MovieEncoder.App</StartupObject>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Babasse-Old-School-Bobines-video.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\WindowsAPICodePack-Core.1.1.2\lib\Microsoft.WindowsAPICodePack.dll</HintPath>
@@ -49,8 +52,10 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
     <Reference Include="System.Management.Instrumentation" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -146,6 +151,7 @@
     <Resource Include="blue - light.jpg" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Babasse-Old-School-Bobines-video.ico" />
     <Content Include="LICENSE.txt" />
     <Resource Include="NOTICE.txt" />
   </ItemGroup>
