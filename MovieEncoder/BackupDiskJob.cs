@@ -22,7 +22,7 @@ namespace MovieEncoder
 {
     class BackupDiskJob : Job
     {
-        private MakeMKVService makeMKVService;
+        private readonly MakeMKVService makeMKVService;
         private readonly HandBrakeService handBrakeService;
         private readonly string driveName;
         private readonly bool keepMovies;
@@ -45,13 +45,15 @@ namespace MovieEncoder
                 if (makeMKVService.MakeMKVBackupAll == false)
                 {
                     // only do the main movie
-                    List<DiskTitle> singleTitle = new List<DiskTitle>();
-                    singleTitle.Add(PickWinner(diskTitles));
+                    List<DiskTitle> singleTitle = new List<DiskTitle>
+                    {
+                        PickWinner(diskTitles)
+                    };
                     diskTitles = singleTitle;
                 }
                 else
                 {
-                    progressReporter.AppendLog($"Backing up {diskTitles.Count} movies", false);
+                    progressReporter.AppendLog($"Backing up {diskTitles.Count} movies", LogEntryType.Normal);
                 }
                 foreach (DiskTitle diskTitle in diskTitles)
                 {

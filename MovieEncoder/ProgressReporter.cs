@@ -25,6 +25,13 @@ using System.Windows.Threading;
 
 namespace MovieEncoder
 {
+    public enum LogEntryType
+    {
+        Normal,
+        Info,
+        Error,
+    }
+
     public class ProgressReporter : INotifyPropertyChanged
     {
         private string _currentTask;
@@ -34,6 +41,7 @@ namespace MovieEncoder
         private Job _currentJob;
         private readonly Dictionary<Job, TextElement> _jobLogPosition = new Dictionary<Job, TextElement>();
         private Table _logTable;
+        private bool _shutdown;
 
         public Job CurrentJob
         {
@@ -41,6 +49,11 @@ namespace MovieEncoder
             set
             {
                 _currentJob = value;
+                if (_currentJob != null)
+                {
+                    MaxProgress = _currentJob.MaxProgress;
+                    CurrentProgress = _currentJob.CurrentProgress;
+                }
                 OnPropertyChanged();
             }
         }
@@ -78,32 +91,16 @@ namespace MovieEncoder
             }
         }
 
-        internal void ClearLog()
-        {
-            LogDocument.Blocks.Clear();
-            CreateLogDocumentTable();
-            JobQueue.ClearJobLog();
-            OnPropertyChanged("LogDocument");
-        }
-
         public string CurrentTask
         {
             get { return _currentTask; }
             set
             {
                 _currentTask = value;
-                AppendLog(value, false);
+                AppendLog(value, LogEntryType.Normal);
                 OnPropertyChanged();
                 OnPropertyChanged("Log");
             }
-        }
-
-        internal TextElement GetLogDocumentBlock(Job job)
-        {
-            TextElement block = null;
-            if (_jobLogPosition.ContainsKey(job))
-                block = _jobLogPosition[job];
-            return block;
         }
 
         public bool IsError
@@ -119,7 +116,8 @@ namespace MovieEncoder
 
         public bool Shutdown
         {
-            get; set;
+            get { return _shutdown; }
+            set { _shutdown = value; OnPropertyChanged(); }
         }
 
         public Visibility IsProgressShown
@@ -142,15 +140,37 @@ namespace MovieEncoder
 
         public Dispatcher Dispatcher { get; internal set; }
 
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public ProgressReporter()
         {
             JobQueue.EnableCollectionSynchronization();
-            _currentTask = "No Tasks";
+            _currentTask = "Stopped";
             _isError = false;
             Remaining = "";
             LogDocument = new FlowDocument();
 
             CreateLogDocumentTable();
+        }
+
+        internal void ClearLog()
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() =>
+            {
+                LogDocument.Blocks.Clear();
+                CreateLogDocumentTable();
+            }));
+
+            JobQueue.ClearJobLog();
+            OnPropertyChanged("LogDocument");
+        }
+
+        internal TextElement GetLogDocumentBlock(Job job)
+        {
+            TextElement block = null;
+            if (_jobLogPosition.ContainsKey(job))
+                block = _jobLogPosition[job];
+            return block;
         }
 
         private void CreateLogDocumentTable()
@@ -169,8 +189,6 @@ namespace MovieEncoder
 
             LogDocument.Blocks.Add(_logTable);
         }
-
-        public event PropertyChangedEventHandler PropertyChanged;
 
         public void UpdateProgress(double total, double current)
         {
@@ -191,51 +209,38 @@ namespace MovieEncoder
             CurrentProgress = 0.0;
             MaxProgress = 100.0;
             Remaining = "";
-
-            if (!_currentTask.Equals("No Tasks"))
-            {
-                _currentTask = "No Tasks";
-            }
         }
 
         internal void AddError(string message)
         {
             _currentTask = $"ERROR: {message}";
-            AppendLog(_currentTask, true);
+            AppendLog(_currentTask, LogEntryType.Error);
             IsError = true;
         }
 
-        internal void AppendLog(string message, bool error = false)
+        internal void AppendLog(string message, LogEntryType type = LogEntryType.Normal)
         {
             string msg = message.Trim();
             if (msg != "")
             {
                 DateTime now = DateTime.Now;
 
-                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() =>
+                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     TableRow row = new TableRow
                     {
-                        Tag = _currentJob
+                        Tag = new object[] { _currentJob, type }
                     };
 
                     Paragraph paragraph = new Paragraph();
                     paragraph.Margin = new Thickness(0);
 
                     Run dtr = new Run(now.ToString("yyyy-MM-dd HH:mm:ss - "));
-                    //dtr.Foreground = Brushes.Gray;
                     row.Cells.Add(new TableCell(new Paragraph(dtr)));
 
                     Run msgr = new Run(msg);
-                    //if (error)
-                    //    msgr.Foreground = Brushes.Red;
-                    //else
-                    //    msgr.Foreground = Brushes.Black;
 
                     row.Cells.Add(new TableCell(new Paragraph(msgr)));
-
-                    // TODO - maybe make table a field instead
-                    //Table table = (Table)LogDocument.Blocks.FirstBlock;
 
                     ColorRow(row, true);
                     _logTable.RowGroups[0].Rows.Add(row);
@@ -254,6 +259,8 @@ namespace MovieEncoder
                         _logTable.Columns[0].Width = new GridLength(dtSize.Width);
                     }
 
+                    // Do not overload the system
+                    System.Threading.Thread.Sleep(10);
                     OnPropertyChanged("LogDocument");
                 }));
             }
@@ -275,24 +282,29 @@ namespace MovieEncoder
             {
                 Block dt = row.Cells[0].Blocks.FirstBlock;
                 Block entry = row.Cells[1].Blocks.FirstBlock;
-                Job job = (Job)row.Tag;
+                Job job = (Job)((object[])row.Tag)[0];
+                LogEntryType type = (LogEntryType)((object[])row.Tag)[1];
                 if (normal == true)
                 {
-                    if (job?.IsErrored == true)
+                    dt.Foreground = Brushes.Gray;
+
+                    switch (type)
                     {
-                        dt.Foreground = Brushes.Gray;
-                        entry.Foreground = Brushes.Red;
-                    }
-                    else
-                    {
-                        dt.Foreground = Brushes.Gray;
-                        entry.Foreground = Brushes.Black;
+                        case LogEntryType.Error:
+                            entry.Foreground = Brushes.Red;
+                            break;
+                        case LogEntryType.Normal:
+                            entry.Foreground = Brushes.Black;
+                            break;
+                        case LogEntryType.Info:
+                            entry.Foreground = Brushes.Gray;
+                            break;
                     }
                 }
                 else
                 {
                     dt.Foreground = Brushes.LightGray;
-                    entry.Foreground = Brushes.LightGray;
+                    entry.Foreground = Brushes.Gray;
                 }
             }));
         }

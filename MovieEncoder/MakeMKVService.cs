@@ -42,7 +42,7 @@ namespace MovieEncoder
             StopRunningProcess();
 
             makeMKVProcess = new Process();
-            makeMKVProcess.StartInfo = new ProcessStartInfo(MakeMKVConExePath, "-r --cache=1 info dev:" + drive);
+            makeMKVProcess.StartInfo = new ProcessStartInfo(MakeMKVConExePath, "-r --cache=1 --progress=-stdout info dev:" + drive);
             makeMKVProcess.StartInfo.CreateNoWindow = true;
             makeMKVProcess.StartInfo.RedirectStandardOutput = true;
             makeMKVProcess.StartInfo.RedirectStandardInput = true;
@@ -56,6 +56,9 @@ namespace MovieEncoder
             string lastError = null;
             int titleCount = 0;
             DiskTitle[] diskTitles = null;
+
+            int lastProgress = -1;
+            long progressStarted = 0;
             makeMKVProcess.OutputDataReceived += new DataReceivedEventHandler(
                 delegate (object sender, DataReceivedEventArgs e)
                 {
@@ -76,7 +79,6 @@ namespace MovieEncoder
                         if (cInfo[1].Equals("2"))
                         {
                             title = cInfo[3].Replace("\"", "");
-                            //logger.info("Found Disk Title {}", title.replaceAll("\"", ""));
                         }
                     }
                     else if (line.StartsWith("TINFO:"))
@@ -152,13 +154,35 @@ namespace MovieEncoder
                                 }
                                 break;
                         }
-                    } else if (line.StartsWith("MSG:"))
+                    }
+                    else if (line.StartsWith("MSG:"))
                     {
                         String[] msg = Regex.Split(line.Replace("\"", ""), "^.{3,5}:|,");
-                        if (msg[1] == "2024")
+                        int errorCode = int.Parse(msg[1]);
+                        if (errorCode >= 2000 && errorCode < 3000) // == "2024")
                         {
                             lastError = msg[4];
+                            progressReporter.AppendLog(lastError, LogEntryType.Error);
                         }
+                        else
+                        {
+                            progressReporter.AppendLog(msg[4].Replace("\"", ""), LogEntryType.Info);
+                        }
+                    }
+                    else if (line.StartsWith("PRGT:"))
+                    {
+                        String[] progItems = Regex.Split(line, "^.{4}:|,");
+                        progressReporter.CurrentTask = progItems[3].Replace("\"", "");
+                    }
+                    else if (line.StartsWith("PRGC:"))
+                    {
+                        String[] progItems = Regex.Split(line, "^.{4}:|,");
+                        progressReporter.Remaining = progItems[3].Replace("\"", "");
+                    }
+                    else if (line.StartsWith("PRGV:"))
+                    {
+                        // update progess but not time to go
+                        ProcessProgress(progressReporter, ref lastProgress, ref progressStarted, line, true);
                     }
                 }
             );
@@ -204,7 +228,7 @@ namespace MovieEncoder
 
             StopRunningProcess();
 
-            string cmd = "-r --decrypt --progress=-stdout --cache=1024 mkv dev:" + diskTitle.Drive + " " + diskTitle.TitleIndex + " \"" + outDir + "\"";
+            string cmd = "-r --decrypt --noscan --progress=-stdout --progress=-stdout --cache=1024 mkv dev:" + diskTitle.Drive + " " + diskTitle.TitleIndex + " \"" + outDir + "\"";
 
             makeMKVProcess = new Process();
             makeMKVProcess.StartInfo = new ProcessStartInfo(MakeMKVConExePath, cmd);
@@ -230,33 +254,29 @@ namespace MovieEncoder
 
                     if (line.StartsWith("PRGV:"))
                     {
-                        long progressNow = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-                        String[] progItems = Regex.Split(line, "^.{4}:|,");
-                        int currentProgress = int.Parse(progItems[2]);
-                        if (lastProgress > currentProgress)
-                        {
-                            // need to reset
-                            progressStarted = progressNow;
-                        }
-                        lastProgress = currentProgress;
-                        // calc progress
-                        double pmsec = currentProgress / (double)(progressNow - progressStarted);
-                        int total = int.Parse(progItems[3]);
-                        int remain = total - currentProgress;
-                        int msToGo = (int)(remain / pmsec);
-                        int minToGo = msToGo / 60000;
-
-                        progressReporter.MaxProgress = total;
-                        progressReporter.CurrentProgress = currentProgress;
-
-                        progressReporter.Remaining = Utils.GetDuration(msToGo / 1000);
+                        ProcessProgress(progressReporter, ref lastProgress, ref progressStarted, line, false);
                     }
                     else if (line.StartsWith("MSG:"))
                     {
-                        String[] msgParts = Regex.Split(line, ",");
-                        if (msgParts[4].Contains("\"Saving %1 titles into directory %2\""))
+                        string[] msg = Regex.Split(line, ",");
+                        int msgCode = int.Parse(msg[2]);
+                        //if (msgParts[4].Contains("\"Saving %1 titles into directory %2\""))
+                        if (msgCode == 5014)
                         {
-                            progressReporter.CurrentTask = msgParts[3].Replace("\"", "");
+                            progressReporter.CurrentTask = msg[3].Replace("\"", "");
+                        }
+                        else
+                        {
+                            if (msgCode >= 2000 && msgCode < 3000)
+                            {
+                                progressReporter.AppendLog(msg[3].Replace("\"", ""), LogEntryType.Error);
+                            }
+                            else
+                            {
+                                progressReporter.AppendLog(msg[3].Replace("\"", ""), LogEntryType.Info);
+                            }
+
+                            //progressReporter.AppendLog(msg[3].Replace("\"", ""), LogEntryType.Info);
                         }
                     }
                     else if (line.StartsWith("PRGT:"))
@@ -267,7 +287,7 @@ namespace MovieEncoder
                     else if (line.StartsWith("PRGC:"))
                     {
                         String[] progItems = Regex.Split(line, "^.{4}:|,");
-                        progressReporter.CurrentTask = progItems[3].Replace("\"", "");
+                        progressReporter.Remaining = progItems[3].Replace("\"", "");
                     }
                 }
             );
@@ -277,6 +297,31 @@ namespace MovieEncoder
             if (makeMKVProcess != null)
                 makeMKVProcess.CancelOutputRead();
             return true;
+        }
+
+        private static void ProcessProgress(ProgressReporter progressReporter, ref int lastProgress, ref long progressStarted, string line, bool suppressRemaining)
+        {
+            long progressNow = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            String[] progItems = Regex.Split(line, "^.{4}:|,");
+            int currentProgress = int.Parse(progItems[2]);
+            if (lastProgress > currentProgress)
+            {
+                // need to reset
+                progressStarted = progressNow;
+            }
+            lastProgress = currentProgress;
+            // calc progress
+            double pmsec = currentProgress / (double)(progressNow - progressStarted);
+            int total = int.Parse(progItems[3]);
+            int remain = total - currentProgress;
+            int msToGo = (int)(remain / pmsec);
+
+            progressReporter.MaxProgress = total;
+            progressReporter.CurrentProgress = currentProgress;
+            if (!suppressRemaining)
+            {
+                progressReporter.Remaining = Utils.GetDuration(msToGo / 1000);
+            }
         }
 
         private int GetDiscIndex(string drive)

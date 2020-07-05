@@ -52,8 +52,7 @@
         <ListBox x:Name="JobListBox" Margin="2,23,10,10" Grid.Row="2" Grid.Column="2">
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
-                    <EventSetter Event="Selected" Handler="JobListBoxItem_Selected"/>
-                    <EventSetter Event="MouseLeftButtonDown" Handler="JobListBoxItem_MouseLeftButtonDown"/>
+                    <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_PreviewMouseLeftButtonDown"/>
                 </Style>
             </ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate>

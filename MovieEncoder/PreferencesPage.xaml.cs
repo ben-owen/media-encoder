@@ -215,8 +215,8 @@ namespace MovieEncoder
                 {
 
                     ((App)Application.Current).EncoderService.Start();
-                    ProgressPage progressPage = new ProgressPage();
-                    this.NavigationService.Navigate(progressPage);
+                    MainWindow mainWindow = (MainWindow)Window.GetWindow(this);
+                    NavigationService.Navigate(mainWindow.ProgressPage);
                     NotifyPropertyChanged("IsServiceStopped");
                     NotifyPropertyChanged("IsEnabledSaveAll");
                 }

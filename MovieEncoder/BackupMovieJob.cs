@@ -53,19 +53,6 @@ namespace MovieEncoder
             return true;
         }
         
-        private DiskTitle PickWinner(List<DiskTitle> diskTitles)
-        {
-            if (diskTitles.Count == 0)
-            {
-                return null;
-            }
-
-            diskTitles.Sort(ComparDiskTitleByDuration);
-            diskTitles.Reverse();
-
-            return diskTitles.ElementAt(0);
-        }
-
         private static int ComparDiskTitleByDuration(DiskTitle x, DiskTitle y)
         {
             if (x == null)

@@ -4,7 +4,6 @@ Backup and re-encode bulk movies using projects MakeMKV and HandBrake
 
 ## TODO
 - Have mutlple modes of disk backups. Add support for HandBrake to backup disks.
-- Log information from MakeMKV scan.
 
 ## [1.0.1] - Unreleased
 ### Added
@@ -12,6 +11,7 @@ Backup and re-encode bulk movies using projects MakeMKV and HandBrake
 - Clear log command.
 - Color errors in the log.
 - Scroll to log from selection in job list.
+- Log information from MakeMKV scan.
 
 ### Changed
 - Changed how multiple backup job ran. Now split into a scan job and a backup job.

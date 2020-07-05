@@ -18,7 +18,7 @@
                 </MenuItem>
             </Menu>
             <Border BorderThickness="0" Margin="0,22,0,0" BorderBrush="Black">
-                <Frame Source="PreferencesPage.xaml" />
+                <Frame Content="{Binding ElementName=MainWindow,Path=PreferencesPage}" Source="PreferencesPage.xaml" />
             </Border>
         </Grid>
     </NavigationWindow.Content>

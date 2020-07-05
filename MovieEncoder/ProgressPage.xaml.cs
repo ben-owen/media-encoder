@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -24,7 +25,9 @@ namespace MovieEncoder
     /// </summary>
     public partial class ProgressPage : Page, INotifyPropertyChanged
     {
-        private ProgressReporter ProgressReporter;
+        private Job _currentJob;
+
+        private readonly ProgressReporter ProgressReporter;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -52,6 +55,31 @@ namespace MovieEncoder
             {
                 OnPropertyChanged("StatusColor");
             }
+            else if (e.PropertyName == "Started")
+            {
+                OnPropertyChanged("RunButtonString");
+            }
+            else if (e.PropertyName == "CurrentJob")
+            {
+                // scroll to that job in the task list
+                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    Job job = ((ProgressReporter)sender).CurrentJob;
+                    if (job != null && _currentJob != job)
+                    {
+                        for (int i = 0; i < JobListBox.Items.Count; i++)
+                        {
+                            ListBoxItem item = (ListBoxItem)JobListBox.ItemContainerGenerator.ContainerFromIndex(i);
+                            if (item != null && item.Content == job)
+                            {
+                                item.BringIntoView();
+                                break;
+                            }
+                        }
+                    }
+                    _currentJob = job;
+                }));
+            }
         }
 
         private void StopEncoding_Click(object sender, RoutedEventArgs e)
@@ -69,7 +97,9 @@ namespace MovieEncoder
 
         private void LogTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            ((RichTextBox)sender).ScrollToEnd();
+            Dispatcher.BeginInvoke(new Action(() => {
+                ((RichTextBox)sender).ScrollToEnd();
+            }));
         }
 
         protected void OnPropertyChanged([CallerMemberName] string name = null)
@@ -79,40 +109,26 @@ namespace MovieEncoder
 
         public string RunButtonString
         {
-            get { return ((App)Application.Current).EncoderService.IsStarted() ? "Stop" : "Start"; }
+            get { return ProgressReporter.Shutdown ? "Start" : "Stop"; }
         }
 
-        private void JobListBoxItem_Selected(object sender, RoutedEventArgs e)
+        private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            Job job = (Job)((ListBoxItem)e.Source).Content;
-            if (job != null)
+            if (sender is ListBoxItem)
             {
-                // scroll to the log entries
-                TextElement block = ProgressReporter.GetLogDocumentBlock(job);
-                if (block != null)
+                Job job = (Job)((ListBoxItem)sender).Content;
+                if (job != null)
                 {
-                    double top = block.ContentStart.GetPositionAtOffset(0).GetCharacterRect(LogicalDirection.Forward).Top;
-                    double bottom = block.ContentStart.GetPositionAtOffset(0).GetCharacterRect(LogicalDirection.Forward).Bottom;
-                    if (block.GetType() == typeof(TableRow))
+                    // scroll to the log entries
+                    TextElement block = ProgressReporter.GetLogDocumentBlock(job);
+                    if (block != null)
                     {
-                        System.Console.WriteLine($"{job.JobName} = Txt: {((Run)((Paragraph)((TableRow)block).Cells[1].Blocks.FirstBlock).Inlines.LastInline).Text}");
-                        TextPointer start = ((Paragraph)((TableRow)block).Cells[0].Blocks.FirstBlock).Inlines.FirstInline.ContentStart;
-                        TextPointer end = ((Paragraph)((TableRow)block).Cells[1].Blocks.FirstBlock).Inlines.FirstInline.ContentEnd;
-                        LogRichTextBox.Selection.Select(start, end);
-                        top = start.GetCharacterRect(LogicalDirection.Forward).Top;
+                        double top = block.ContentStart.GetPositionAtOffset(0).GetCharacterRect(LogicalDirection.Forward).Top;
+                        LogRichTextBox.ScrollToVerticalOffset(LogRichTextBox.VerticalOffset + top);
+                        LogRichTextBox.ScrollToHorizontalOffset(0);
                     }
-                    System.Console.WriteLine($"{job.JobName} = Sel: {LogRichTextBox.Selection.Start.GetCharacterRect(LogicalDirection.Backward).Bottom}");
-                    System.Console.WriteLine($"{job.JobName} = Top: {top}");
-                    System.Console.WriteLine($"{job.JobName} = Tst: {block.ContentStart.GetPositionAtOffset(0).GetCharacterRect(LogicalDirection.Forward).Top}");
-                    LogRichTextBox.ScrollToVerticalOffset(LogRichTextBox.VerticalOffset + top);
-                    LogRichTextBox.ScrollToHorizontalOffset(0);
                 }
             }
-        }
-
-        private void JobListBoxItem_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-
         }
     }
 }

@@ -34,7 +34,7 @@ namespace MovieEncoder
         private Thread jobThread;
         private bool running;
         private ManagementEventWatcher managementEventWatcher;
-        private List<FileSystemWatcher> fileSystemWatchers = new List<FileSystemWatcher>();
+        private readonly List<FileSystemWatcher> fileSystemWatchers = new List<FileSystemWatcher>();
         private JobQueue jobQueue = new JobQueue();
         private ProgressReporter progressReporter;
 
@@ -84,7 +84,10 @@ namespace MovieEncoder
             // Start file monitoring
             SetupFileMonitoring(Properties.Settings.Default.HandBrakeSourceDir);
 
+            progressReporter.Shutdown = false;
+
             jobThread = new Thread(new ThreadStart(JobRunner));
+            jobThread.Name = "JobRunner";
             jobThread.Start();
         }
 
@@ -113,18 +116,22 @@ namespace MovieEncoder
             ManagementOperationObserver observer = new ManagementOperationObserver();
 
             // Bind to local machine
-            ConnectionOptions opt = new ConnectionOptions();
-            opt.EnablePrivileges = true; //sets required privilege
+            ConnectionOptions opt = new ConnectionOptions
+            {
+                EnablePrivileges = true //sets required privilege
+            };
             ManagementScope scope = new ManagementScope("root\\CIMV2", opt);
 
             try
             {
-                q = new WqlEventQuery();
-                q.EventClassName = "__InstanceModificationEvent";
-                q.WithinInterval = new TimeSpan(0, 0, 1);
+                q = new WqlEventQuery
+                {
+                    EventClassName = "__InstanceModificationEvent",
+                    WithinInterval = new TimeSpan(0, 0, 1),
 
-                // DriveType - 5: CDROM
-                q.Condition = @"TargetInstance ISA 'Win32_LogicalDisk' and TargetInstance.DriveType = 5";
+                    // DriveType - 5: CDROM
+                    Condition = @"TargetInstance ISA 'Win32_LogicalDisk' and TargetInstance.DriveType = 5"
+                };
                 managementEventWatcher = new ManagementEventWatcher(scope, q);
 
                 // register async. event handler
@@ -154,15 +161,16 @@ namespace MovieEncoder
 
             try
             {
-                FileSystemWatcher watcher = new FileSystemWatcher();
-                watcher.Path = path;
-                watcher.NotifyFilter = NotifyFilters.LastAccess
+                FileSystemWatcher watcher = new FileSystemWatcher
+                {
+                    Path = path,
+                    NotifyFilter = NotifyFilters.LastAccess
                                      | NotifyFilters.LastWrite
                                      | NotifyFilters.FileName
                                      | NotifyFilters.DirectoryName
-                                     | NotifyFilters.CreationTime;
+                                     | NotifyFilters.CreationTime
+                };
                 watcher.Created += FileSystem_Created;
-                //watcher.Changed += FileSystem_Created;
                 watcher.Renamed += FileSystem_Renamed;
 
                 fileSystemWatchers.Add(watcher);
@@ -270,10 +278,6 @@ namespace MovieEncoder
 
         public void Stop()
         {
-            progressReporter.AppendLog("Stopping", false);
-            progressReporter.Reset();
-            progressReporter.Shutdown = true;
-
             if (managementEventWatcher != null)
             {
                 managementEventWatcher.Stop();
@@ -288,6 +292,10 @@ namespace MovieEncoder
             this.running = false;
             this.handBrakeService.Shutdown();
             this.makeMKVService.Shutdown();
+
+            progressReporter.CurrentTask = "Stopped";
+            progressReporter.Reset();
+            progressReporter.Shutdown = true;
         }
 
         private void JobRunner()
@@ -335,6 +343,11 @@ namespace MovieEncoder
                         progressReporter.Reset();
                     }
                     jobQueue.RemoveJob(job);
+                } else
+                {
+                    if (!progressReporter.CurrentTask.Equals("No Tasks")) {
+                        progressReporter.CurrentTask = "No Tasks";
+                    }
                 }
                 Thread.Sleep(100);
             }

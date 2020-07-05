@@ -23,9 +23,15 @@ namespace MovieEncoder
     /// </summary>
     public partial class MainWindow : NavigationWindow
     {
+        public readonly PreferencesPage PreferencesPage;
+        public readonly ProgressPage ProgressPage;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            PreferencesPage = new PreferencesPage();
+            ProgressPage = new ProgressPage();
         }
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
