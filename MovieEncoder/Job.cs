@@ -75,6 +75,7 @@ namespace MovieEncoder
             {
                 // clear the job queue
                 jobQueue.Clear();
+                allJobs.Clear();
             }
         }
 

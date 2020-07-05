@@ -20,35 +20,40 @@ using System.Threading.Tasks;
 
 namespace MovieEncoder
 {
-    class BackupMovieJob : Job
+    class BackupDiskJob : Job
     {
-        private readonly MakeMKVService makeMKVService;
+        private MakeMKVService makeMKVService;
         private readonly HandBrakeService handBrakeService;
-        private readonly DiskTitle diskTitle;
+        private readonly string driveName;
         private readonly bool keepMovies;
 
-        public override string JobName => "Backup Movie " + diskTitle.FileName;
+        public override string JobName => "Scanning Disk " + driveName;
 
-        public BackupMovieJob(MakeMKVService makeMKVService, HandBrakeService handBrakeService, DiskTitle diskTitle, bool keepMovies = false)
+        public BackupDiskJob(MakeMKVService makeMKVService, HandBrakeService handBrakeService, string driveName, bool keepMovies = false)
         {
             this.makeMKVService = makeMKVService;
             this.handBrakeService = handBrakeService;
-            this.diskTitle = diskTitle;
+            this.driveName = driveName;
             this.keepMovies = keepMovies;
         }
 
         public override bool RunJob(JobQueue jobQueue)
         {
-            // Backup
-            if (!makeMKVService.Backup(diskTitle, progressReporter))
+            List<DiskTitle> diskTitles = makeMKVService.GetDiskTitles(driveName, progressReporter);
+            if (makeMKVService.MakeMKVBackupAll == false)
             {
-                return false;
+                // only do the main movie
+                diskTitles = new List<DiskTitle>();
+                diskTitles.Add(PickWinner(diskTitles));
+            } else {
+                progressReporter.AppendLog($"Backing up {diskTitles.Count} movies");            
             }
-            if (keepMovies)
+            
+            foreach (DiskTitle diskTitle in diskTitles) 
             {
-                // This means the source of the next job is the output of the current job. These files will not be deleted after encoding.
-                jobQueue.AddJob(new EncodeMovieJob(handBrakeService, diskTitle.FullMKVPath, true));
-            }
+                // Backup Movie Job
+                jobQueue.AddJob(new BackupMovieJob(makeMKVService, handBrakeService, diskTitle, keepMovies), true);
+            }        
             return true;
         }
         

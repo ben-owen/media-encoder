@@ -38,13 +38,6 @@ namespace MovieEncoder
 
         public JobQueue JobQueue { get; } = new JobQueue();
 
-        /*
-        public AsyncObservableCollection<JobInfo> JobHistory
-        {
-            get; set;
-        }
-        */
-
         public double MaxProgress
         {
             get
@@ -58,15 +51,12 @@ namespace MovieEncoder
                     _currentJob.MaxProgress = value;
                     OnPropertyChanged();
                 }
-                //_maxProgress = value;
-                //OnPropertyChanged();
             }
         }
         public double CurrentProgress
         {
             get
             {
-                //return _currentProgress;
                 return _currentJob != null ? _currentJob.CurrentProgress : 0;
             }
             set
@@ -76,16 +66,6 @@ namespace MovieEncoder
                     _currentJob.CurrentProgress = value;
                     OnPropertyChanged();
                 }
-                /*
-                _currentProgress = value;
-                OnPropertyChanged();
-                if (CurrentJob != null)
-                {
-                    CurrentJob.MaxProgress = _maxProgress;
-                    CurrentJob.CurrentProgress = _currentProgress;
-                    OnPropertyChanged("Jobs");
-                }
-                */
             }
         }
 
@@ -143,11 +123,6 @@ namespace MovieEncoder
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void WriteToLog(string line)
-        {
-
-        }
-
         public void UpdateProgress(double total, double current)
         {
             this.MaxProgress = total;
@@ -162,14 +137,15 @@ namespace MovieEncoder
         internal void Reset()
         {
             IsError = false;
-            _currentTask = "No Tasks";
-            CurrentJob = null;
-
-
             CurrentProgress = 0.0;
             MaxProgress = 100.0;
+            Remaining = "";
+            CurrentJob = null;
 
-            OnPropertyChanged("CurrentTask");
+            if (!_currentTask.Equals("No Tasks"))
+            {
+                _currentTask = "No Tasks";
+            }
         }
 
         internal void AddError(string message)
@@ -185,57 +161,10 @@ namespace MovieEncoder
             {
                 DateTime now = DateTime.Now;
                 _log.Append(now.ToString("yyyy-MM-dd HH:mm:ss - "));
-                _log.Append(CurrentTask);
+                _log.Append(msg);
                 _log.Append("\r\n");
                 OnPropertyChanged("Log");
             }
         }
-        /*
-        internal void AddJob(JobInfo jobInfo)
-        {
-            CurrentJob = jobInfo;
-            JobHistory.Add(jobInfo);
-            OnPropertyChanged("CurrentJob");
-        }
-        */
     }
-    /*
-    public class JobInfo : INotifyPropertyChanged
-    {
-        private string _jobName;
-        private double _maxProgress;
-        private double _currentProgress;
-
-        public JobInfo(string jobName)
-        {
-            this.JobName = jobName;
-            this.MaxProgress = 100;
-            this.CurrentProgress = 0;
-        }
-
-        public string JobName
-        {
-            get { return _jobName; }
-            set { _jobName = value; OnPropertyChanged(); }
-        }
-
-        public double MaxProgress
-        {
-            get { return _maxProgress; }
-            set { _maxProgress = value; OnPropertyChanged(); }
-        }
-
-        public double CurrentProgress
-        {
-            get { return _currentProgress; }
-            set { _currentProgress = value; OnPropertyChanged(); }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string name = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
-    }
-    */
 }

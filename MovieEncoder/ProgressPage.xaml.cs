@@ -41,11 +41,7 @@ namespace MovieEncoder
 
             DataContext = ProgressReporter;
 
-            //jobs.Add(new JobInfo("Test A"));
-
             JobListBox.ItemsSource = ProgressReporter.JobQueue.GetJobs();
-
-            //jobs.Add(new JobInfo("Test B"));
         }
 
         private void PropertyReporter_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -54,44 +50,12 @@ namespace MovieEncoder
             {
                 OnPropertyChanged("StatusColor");
             }
-            else if (e.PropertyName == "CurrentJob")
-            {
-                //jobs.Clear();
-                //jobs.AddRange(new List<JobInfo>(Reporter.JobHistory));
-                /*
-                if (Reporter.CurrentJob != null && !jobs.Contains(Reporter.CurrentJob))
-                {
-                    jobs.Add(Reporter.CurrentJob);
-                }
-                */
-            }
-            else if (e.PropertyName == "MaxProgress")
-            {
-                /*if (ProgressReporter.JobQueue.GetQueue().Contains(ProgressReporter.CurrentJob))
-                {
-                    int index = ProgressReporter.JobQueue.GetQueue().IndexOf(ProgressReporter.CurrentJob);
-                    ProgressReporter.JobQueue.GetQueue().ElementAt(index).MaxProgress = ProgressReporter.MaxProgress;
-                }
-                */
-            }
-            else if (e.PropertyName == "CurrentProgress")
-            {
-                /*
-                if (jobs.Contains(ProgressReporter.CurrentJob))
-                {
-                    int index = jobs.IndexOf(ProgressReporter.CurrentJob);
-                    jobs.ElementAt(index).CurrentProgress = ProgressReporter.CurrentProgress;
-                }
-                */
-            }
         }
 
         private void StopEncoding_Click(object sender, RoutedEventArgs e)
         {
             ((App)Application.Current).EncoderService.Stop();
-
-            this.NavigationService.GoBack();
-            this.NavigationService.RemoveBackEntry();
+            ProgressReporter.Reset();
         }
 
         private void LogTextBox_TextChanged(object sender, TextChangedEventArgs e)

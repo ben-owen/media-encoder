@@ -64,7 +64,7 @@ namespace MovieEncoder
                     if (driveInfo.DriveType == DriveType.CDRom && driveInfo.VolumeLabel != null)
                     {
                         // Run MakeMKV to backup movie
-                        BackupMovieJob job = new BackupMovieJob(makeMKVService, handBrakeService, (string)driveInfo.Name, Properties.Settings.Default.MakeMkvKeepFiles);
+                        BackupDiskJob job = new BackupDiskJob(makeMKVService, handBrakeService, (string)driveInfo.Name, Properties.Settings.Default.MakeMkvKeepFiles);
                         // move backups to the top of the queue
                         jobQueue.AddJob(job, true);
                     }
@@ -253,7 +253,7 @@ namespace MovieEncoder
                     {
                         Debug.WriteLine("CD has been inserted: " + mbo.Properties["VolumeName"].Value);
                         // Run MakeMKV to backup movie
-                        BackupMovieJob job = new BackupMovieJob(makeMKVService, handBrakeService, (string)mbo.Properties["DeviceID"].Value, Properties.Settings.Default.MakeMkvKeepFiles);
+                        BackupDiskJob job = new BackupDiskJob(makeMKVService, handBrakeService, (string)mbo.Properties["DeviceID"].Value, Properties.Settings.Default.MakeMkvKeepFiles);
                         jobQueue.AddJob(job, true);
                     }
                     else
