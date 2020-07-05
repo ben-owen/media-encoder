@@ -15,8 +15,11 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -29,15 +32,41 @@ namespace MovieEncoder
     {
         internal readonly EncoderService EncoderService = new EncoderService();
         internal readonly ProgressReporter ProgressReporter = new ProgressReporter();
+        private Mutex myMutex;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern bool SetForegroundWindow(IntPtr windowHandle);
 
         public App()
         {
             this.EncoderService.SetProgressReporter(this.ProgressReporter);
         }
 
+
         private void Application_Exit(object sender, ExitEventArgs e)
         {
             EncoderService.Stop();        
+        }
+
+        private void Application_Startup(object sender, StartupEventArgs e)
+        {
+            bool aIsNewInstance = false;
+            myMutex = new Mutex(true, "MovieEncoderApplication", out aIsNewInstance);
+            if (!aIsNewInstance)
+            {
+                // Bring main window to front
+                Process proc = Process.GetCurrentProcess();
+                Process[] processes = Process.GetProcessesByName(proc.ProcessName);
+                foreach (Process appProcess in processes)
+                {
+                    if (appProcess.MainWindowHandle != proc.MainWindowHandle)
+                    {
+                        SetForegroundWindow(appProcess.MainWindowHandle);
+                        break;
+                    }
+                }
+                App.Current.Shutdown();
+            }
         }
     }
 }
