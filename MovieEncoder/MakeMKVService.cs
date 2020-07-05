@@ -173,11 +173,18 @@ namespace MovieEncoder
                 throw new JobException(lastError);
             }
 
+            List<DiskTitle> titles = new List<DiskTitle>();
             if (diskTitles != null)
             {
-                return new List<DiskTitle>(diskTitles);
+                foreach (DiskTitle diskTitle in diskTitles)
+                {
+                    if (diskTitle != null)
+                    {
+                        titles.Add(diskTitle);
+                    }
+                }
             }
-            return new List<DiskTitle>();
+            return titles;
         }
 
         internal bool Backup(DiskTitle diskTitle, ProgressReporter progressReporter)
@@ -193,18 +200,6 @@ namespace MovieEncoder
             {
                 throw new Exception("Looks like MakeMKV was already run. Found file \"" + finalOutFile + "\". Will not create a backup.");
             }
-            /*
-            if (Files.exists(properties.getMakeMkvDestPath(diskTitle)))
-            {
-                logger.warn("Looks like {} was already processed. Found file \"{}\". Will not create a backup.", diskTitle.getDiskName(), mkvPath);
-                return diskTitle;
-            }
-            if (Files.exists(properties.getHandBreakDestPath(diskTitle)))
-            {
-                logger.warn("Looks like {} was already encoded. Found file \"{}\". Will not create a backup.", diskTitle.getDiskName(), mkvPath);
-                return diskTitle;
-            }
-            */
             Directory.CreateDirectory(outDir);
 
             StopRunningProcess();
@@ -255,41 +250,14 @@ namespace MovieEncoder
                         progressReporter.CurrentProgress = currentProgress;
 
                         progressReporter.Remaining = Utils.GetDuration(msToGo / 1000);
-                        //makeMkvJobInfo.setRemaining(Duration.ofSeconds(msToGo / 1000));
-                        /*
-                        if (nextReport <= System.currentTimeMillis())
-                        {
-                            if (showProgress)
-                            {
-                                if (progress > 0)
-                                {
-                                    StringBuilder report = new StringBuilder(String.format("Processing %s is %d%% complete.", diskTitle.getDiskName(), (int)(progress * 100)));
-                                    if (minToGo > 0)
-                                    {
-                                        LocalDateTime estDone = LocalDateTime.now().plusMinutes(minToGo);
-                                        report.append(String.format(" Est %d minutes remaining to finish on %s.", minToGo,
-                                                dateTimeFormatter.format(estDone)));
-                                    }
-                                    else
-                                    {
-                                        report.append(" Est less than a minute to finish.");
-                                    }
-                                    logger.info(report.toString());
-                                }
-                            }
-                            nextReport = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10);
-                        }
-                        */
-
                     }
                     else if (line.StartsWith("MSG:"))
                     {
                         String[] msgParts = Regex.Split(line, ",");
                         if (msgParts[4].Contains("\"Saving %1 titles into directory %2\""))
                         {
-                            //showProgress = true;
+                            progressReporter.CurrentTask = msgParts[3].Replace("\"", "");
                         }
-                        //logger.info(msgParts[3].replaceAll("\"", ""));
                     }
                     else if (line.StartsWith("PRGT:"))
                     {
@@ -308,56 +276,6 @@ namespace MovieEncoder
             makeMKVProcess.WaitForExit();
             if (makeMKVProcess != null)
                 makeMKVProcess.CancelOutputRead();
-
-            /*
-        try
-        {
-                while ((line = bin.readLine()) != null)
-                {
-                }
-
-                if (exec.exitValue() == 0)
-                {
-                    // find the created file and ensure it's named correctly.
-                    Path outFile = outDir.resolve(diskTitle.getMkvName());
-                    Files.move(outFile, finalOutFile);
-                }
-                deleteDirectory(outDir);
-            }
-            catch (IOException e)
-            {
-                // remove the file
-                try
-                {
-                    deleteDirectory(outDir);
-                }
-                catch (IOException ex)
-                {
-                    logger.error("Error removing \"{}\"", mkvPath, ex);
-                }
-                throw new RuntimeException(e);
-            }
-            finally
-            {
-                if (exec != null)
-                {
-                    if (exec.isAlive())
-                    {
-                        ProcessUtil.destroyIfAlive(exec, 5, TimeUnit.SECONDS);
-                        try
-                        {
-                            Files.deleteIfExists(mkvPath);
-                        }
-                        catch (IOException ex)
-                        {
-                            logger.error("Error removing \"{}\"", mkvPath);
-                        }
-                    }
-                }
-            }
-            return diskTitle;
-        }
-            */
             return true;
         }
 
@@ -384,7 +302,7 @@ namespace MovieEncoder
                     }
                     if (line.StartsWith("DRV:"))
                     {
-                        String[] drvItems = Regex.Split(line.Replace("\"", ""), "^.{3,5}:|,");
+                        string[] drvItems = Regex.Split(line.Replace("\"", ""), "^.{3,5}:|,");
                         if (drvItems.Length > 7 && drvItems[7].Length > 0)
                         {
                             // Matched Drive

@@ -299,15 +299,15 @@ namespace MovieEncoder
                 Job job = jobQueue.GetFirstJob();
                 if (job != null)
                 {
+                    job.SetReporter(progressReporter);
+
                     progressReporter.Reset();
-                    //progressReporter.JobQueue.AddJob(job);
                     progressReporter.CurrentJob = job;
-                    Debug.WriteLine("Running Job Type " + job.GetType());
                     progressReporter.CurrentTask = "Starting Job " + job.JobName;
 
-                    job.SetReporter(progressReporter);
                     try
                     {
+                        job.IsStarted = true;
                         if (job.RunJob(jobQueue))
                         {
                             progressReporter.CurrentTask = "Completed Job " + job.JobName;

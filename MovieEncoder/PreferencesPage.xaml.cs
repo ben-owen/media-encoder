@@ -217,7 +217,6 @@ namespace MovieEncoder
                     ((App)Application.Current).EncoderService.Start();
                     ProgressPage progressPage = new ProgressPage();
                     this.NavigationService.Navigate(progressPage);
-                    startEncoding.Content = "Stop";
                     NotifyPropertyChanged("IsServiceStopped");
                     NotifyPropertyChanged("IsEnabledSaveAll");
                 }
@@ -226,10 +225,10 @@ namespace MovieEncoder
             {
                 ((App)Application.Current).EncoderService.Stop();
                 this.NavigationService.RemoveBackEntry();
-                startEncoding.Content = "Start";
                 NotifyPropertyChanged("IsServiceStopped");
                 NotifyPropertyChanged("IsEnabledSaveAll");
             }
+            NotifyPropertyChanged("StartEncodingButtonText");
         }
 
         private bool ValidateSettings()

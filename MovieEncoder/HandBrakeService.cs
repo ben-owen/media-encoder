@@ -250,7 +250,7 @@ namespace MovieEncoder
                                 stateKey = "Working";
                                 if (!encoding)
                                 {
-                                    reporter.CurrentTask = "Encoding '" + Path.GetFileName(diskTitle.FullMKVPath) + "' to '" + Path.GetDirectoryName(outPath) + "'";
+                                    reporter.CurrentTask = "Encoding "; // + Path.GetFileName(diskTitle.FullMKVPath) + "' to '" + Path.GetDirectoryName(outPath) + "'";
                                     encoding = true;
                                 }
                                 reporter.CurrentProgress = ((double)jTokens[stateKey]["Progress"] * 100);
@@ -260,7 +260,7 @@ namespace MovieEncoder
                                 stateKey = "Scanning";
                                 if (!scanning)
                                 {
-                                    reporter.CurrentTask = "Scanning '" + Path.GetFileName(diskTitle.FullMKVPath) + "'";
+                                    reporter.CurrentTask = "Scanning "; // + Path.GetFileName(diskTitle.FullMKVPath) + "'";
                                     scanning = true;
                                 }
                                 reporter.CurrentProgress = ((double)jTokens[stateKey]["Progress"] * 100);
@@ -270,7 +270,7 @@ namespace MovieEncoder
                                 stateKey = "Muxing";
                                 if (!muxing)
                                 {
-                                    reporter.CurrentTask = "Muxing '" + Path.GetFileName(diskTitle.FullMKVPath) + "'";
+                                    reporter.CurrentTask = "Muxing "; // + Path.GetFileName(diskTitle.FullMKVPath) + "'";
                                     muxing = true;
                                 }
                                 reporter.CurrentProgress = ((double)jTokens[stateKey]["Progress"] * 100);

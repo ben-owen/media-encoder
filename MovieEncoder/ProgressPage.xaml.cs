@@ -54,8 +54,15 @@ namespace MovieEncoder
 
         private void StopEncoding_Click(object sender, RoutedEventArgs e)
         {
-            ((App)Application.Current).EncoderService.Stop();
+            if (!((App)Application.Current).EncoderService.IsStarted())
+            {
+                ((App)Application.Current).EncoderService.Start();
+            } else
+            {
+                ((App)Application.Current).EncoderService.Stop();
+            }
             ProgressReporter.Reset();
+            OnPropertyChanged("RunButtonString");
         }
 
         private void LogTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -66,6 +73,11 @@ namespace MovieEncoder
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        public string RunButtonString
+        {
+            get { return ((App)Application.Current).EncoderService.IsStarted() ? "Stop" : "Start"; }
         }
     }
 }

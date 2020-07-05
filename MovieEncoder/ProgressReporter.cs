@@ -69,6 +69,12 @@ namespace MovieEncoder
             }
         }
 
+        internal void ClearLog()
+        {
+            _log.Clear();
+            OnPropertyChanged("Log");
+        }
+
         public string CurrentTask
         {
             get { return _currentTask; }
@@ -136,11 +142,12 @@ namespace MovieEncoder
 
         internal void Reset()
         {
+            CurrentJob = null;
+
             IsError = false;
             CurrentProgress = 0.0;
             MaxProgress = 100.0;
             Remaining = "";
-            CurrentJob = null;
 
             if (!_currentTask.Equals("No Tasks"))
             {

@@ -8,10 +8,13 @@
         Title="Movie Encoder" Height="500" Width="800" MinWidth="500" MinHeight="500" WindowStartupLocation="CenterScreen">
     <NavigationWindow.Content>
         <Grid>
-            <Menu Margin="0,0,0,0" Height="22" Name="menu1" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+            <Menu Margin="0,0,0,0" Height="22" x:Name="FileMenuItem" VerticalAlignment="Top" HorizontalAlignment="Stretch">
                 <MenuItem Header="File">
                     <MenuItem x:Name="AboutMenu" Header="About" Click="AboutMenu_Click"/>
                     <MenuItem x:Name="ExitMenu" Header="Exit" Click="ExitMenu_Click" />
+                </MenuItem>
+                <MenuItem x:Name="EditMenuItem" Header="Edit">
+                    <MenuItem x:Name="ClearLogMenu" Header="Clear Log" Click="ClearLogMenu_Click"/>
                 </MenuItem>
             </Menu>
             <Border BorderThickness="0" Margin="0,22,0,0" BorderBrush="Black">

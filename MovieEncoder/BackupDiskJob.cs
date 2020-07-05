@@ -40,21 +40,29 @@ namespace MovieEncoder
         public override bool RunJob(JobQueue jobQueue)
         {
             List<DiskTitle> diskTitles = makeMKVService.GetDiskTitles(driveName, progressReporter);
-            if (makeMKVService.MakeMKVBackupAll == false)
+            if (diskTitles.Count > 0)
             {
-                // only do the main movie
-                diskTitles = new List<DiskTitle>();
-                diskTitles.Add(PickWinner(diskTitles));
-            } else {
-                progressReporter.AppendLog($"Backing up {diskTitles.Count} movies");            
+                if (makeMKVService.MakeMKVBackupAll == false)
+                {
+                    // only do the main movie
+                    List<DiskTitle> singleTitle = new List<DiskTitle>();
+                    singleTitle.Add(PickWinner(diskTitles));
+                    diskTitles = singleTitle;
+                }
+                else
+                {
+                    progressReporter.AppendLog($"Backing up {diskTitles.Count} movies");
+                }
+                foreach (DiskTitle diskTitle in diskTitles)
+                {
+                    // Backup Movie Job
+                    jobQueue.AddJob(new BackupMovieJob(makeMKVService, handBrakeService, diskTitle, keepMovies), true);
+                }
+
+                return true;
             }
-            
-            foreach (DiskTitle diskTitle in diskTitles) 
-            {
-                // Backup Movie Job
-                jobQueue.AddJob(new BackupMovieJob(makeMKVService, handBrakeService, diskTitle, keepMovies), true);
-            }        
-            return true;
+
+            return false;
         }
         
         private DiskTitle PickWinner(List<DiskTitle> diskTitles)

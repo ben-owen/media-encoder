@@ -28,6 +28,7 @@ namespace MovieEncoder
         private double _maxProgress = 100;
         private double _currentProgress = 0;
         private bool _isErrored = false;
+        private bool _started = false;
 
         protected ProgressReporter progressReporter;
 
@@ -39,8 +40,17 @@ namespace MovieEncoder
         public double CurrentProgress
         { get { return _currentProgress; } set { _currentProgress = value; OnPropertyChanged(); } }
 
+        public bool IsStarted
+        { get { return _started; } set { _started = value; OnPropertyChanged(); } }
+
         public bool IsErrored
-        { get { return _isErrored; } set { _isErrored = value; OnPropertyChanged(); } }
+        { get { return _isErrored; } set { _isErrored = value; OnPropertyChanged(); OnPropertyChanged("ProgressColor"); } }
+
+        public string ProgressColor
+        { 
+            get 
+            { return IsErrored ? "#FFF75252" : "#FF39B200"; }
+        }
 
         abstract public bool RunJob(JobQueue jobRunner);
 
@@ -101,7 +111,25 @@ namespace MovieEncoder
                 if (addFirst)
                 {
                     jobQueue.Insert(0, job);
-                    allJobs.Insert(0, job);
+
+                    // Add the job after any run or running jobs
+                    int i = 0;
+                    for (i = 0; i < allJobs.Count; i++)
+                    {
+                        Job allJob = allJobs[i];
+                        if (!allJob.IsStarted)
+                        {
+                            break;
+                        }
+                    }
+                    if (i == allJobs.Count)
+                    {
+                        allJobs.Add(job);
+                    }
+                    else
+                    {
+                        allJobs.Insert(i, job);
+                    }
                 }
                 else
                 {

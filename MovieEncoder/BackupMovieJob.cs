@@ -31,6 +31,7 @@ namespace MovieEncoder
 
         public BackupMovieJob(MakeMKVService makeMKVService, HandBrakeService handBrakeService, DiskTitle diskTitle, bool keepMovies = false)
         {
+            System.Diagnostics.Debug.Assert(diskTitle != null);
             this.makeMKVService = makeMKVService;
             this.handBrakeService = handBrakeService;
             this.diskTitle = diskTitle;

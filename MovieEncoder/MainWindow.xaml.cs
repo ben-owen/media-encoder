@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
+using System.Runtime.InteropServices;
 using System.Windows.Controls;
 using System.Windows.Navigation;
 
@@ -43,6 +44,11 @@ namespace MovieEncoder
             AboutWindow aboutWindow = new AboutWindow();
             aboutWindow.Owner = this;
             aboutWindow.ShowDialog();
+        }
+
+        private void ClearLogMenu_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            ((App)App.Current).ProgressReporter.ClearLog();
         }
     }
 }
