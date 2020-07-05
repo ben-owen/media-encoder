@@ -187,9 +187,16 @@ namespace MovieEncoder
         {
             if (handBrakeProcess != null)
             {
-                if (!handBrakeProcess.HasExited)
+                try
                 {
-                    handBrakeProcess.Kill();
+                    if (!handBrakeProcess.HasExited)
+                    {
+                        handBrakeProcess.Kill();
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    // ignore
                 }
                 handBrakeProcess = null;
             }

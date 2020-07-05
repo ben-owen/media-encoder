@@ -85,7 +85,32 @@ namespace MovieEncoder
             {
                 // clear the job queue
                 jobQueue.Clear();
-                allJobs.Clear();
+
+                // clear all not started jobs
+                for (int i = allJobs.Count - 1; i >= 0; i--)
+                {
+                    Job job = allJobs[i];
+                    if (!job.IsStarted)
+                    {
+                        allJobs.RemoveAt(i);
+                    }
+                }
+            }
+        }
+
+        internal void ClearJobLog()
+        {
+            // Remove jobs that are not in JobQueue
+            lock (_lock)
+            {
+                for (int i = allJobs.Count - 1; i >= 0; i--)
+                {
+                    Job job = allJobs[i];
+                    if (!jobQueue.Contains(job))
+                    {
+                        allJobs.RemoveAt(i);
+                    }
+                }
             }
         }
 

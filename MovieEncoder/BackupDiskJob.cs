@@ -51,7 +51,7 @@ namespace MovieEncoder
                 }
                 else
                 {
-                    progressReporter.AppendLog($"Backing up {diskTitles.Count} movies");
+                    progressReporter.AppendLog($"Backing up {diskTitles.Count} movies", false);
                 }
                 foreach (DiskTitle diskTitle in diskTitles)
                 {

@@ -270,7 +270,7 @@ namespace MovieEncoder
 
         public void Stop()
         {
-            progressReporter.AppendLog("Stopping");
+            progressReporter.AppendLog("Stopping", false);
             progressReporter.Reset();
             progressReporter.Shutdown = true;
 
@@ -294,6 +294,7 @@ namespace MovieEncoder
         {
             running = true;
             Debug.WriteLine("Encode service starting");
+            progressReporter.ReColorLog(false);
             while (running)
             {
                 Job job = jobQueue.GetFirstJob();

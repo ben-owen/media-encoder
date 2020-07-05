@@ -15,6 +15,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 
 namespace MovieEncoder
 {
@@ -42,6 +43,7 @@ namespace MovieEncoder
             DataContext = ProgressReporter;
 
             JobListBox.ItemsSource = ProgressReporter.JobQueue.GetJobs();
+            LogRichTextBox.Document = ProgressReporter.LogDocument;
         }
 
         private void PropertyReporter_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -67,7 +69,7 @@ namespace MovieEncoder
 
         private void LogTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            ((TextBox)sender).ScrollToEnd();
+            ((RichTextBox)sender).ScrollToEnd();
         }
 
         protected void OnPropertyChanged([CallerMemberName] string name = null)
@@ -78,6 +80,39 @@ namespace MovieEncoder
         public string RunButtonString
         {
             get { return ((App)Application.Current).EncoderService.IsStarted() ? "Stop" : "Start"; }
+        }
+
+        private void JobListBoxItem_Selected(object sender, RoutedEventArgs e)
+        {
+            Job job = (Job)((ListBoxItem)e.Source).Content;
+            if (job != null)
+            {
+                // scroll to the log entries
+                TextElement block = ProgressReporter.GetLogDocumentBlock(job);
+                if (block != null)
+                {
+                    double top = block.ContentStart.GetPositionAtOffset(0).GetCharacterRect(LogicalDirection.Forward).Top;
+                    double bottom = block.ContentStart.GetPositionAtOffset(0).GetCharacterRect(LogicalDirection.Forward).Bottom;
+                    if (block.GetType() == typeof(TableRow))
+                    {
+                        System.Console.WriteLine($"{job.JobName} = Txt: {((Run)((Paragraph)((TableRow)block).Cells[1].Blocks.FirstBlock).Inlines.LastInline).Text}");
+                        TextPointer start = ((Paragraph)((TableRow)block).Cells[0].Blocks.FirstBlock).Inlines.FirstInline.ContentStart;
+                        TextPointer end = ((Paragraph)((TableRow)block).Cells[1].Blocks.FirstBlock).Inlines.FirstInline.ContentEnd;
+                        LogRichTextBox.Selection.Select(start, end);
+                        top = start.GetCharacterRect(LogicalDirection.Forward).Top;
+                    }
+                    System.Console.WriteLine($"{job.JobName} = Sel: {LogRichTextBox.Selection.Start.GetCharacterRect(LogicalDirection.Backward).Bottom}");
+                    System.Console.WriteLine($"{job.JobName} = Top: {top}");
+                    System.Console.WriteLine($"{job.JobName} = Tst: {block.ContentStart.GetPositionAtOffset(0).GetCharacterRect(LogicalDirection.Forward).Top}");
+                    LogRichTextBox.ScrollToVerticalOffset(LogRichTextBox.VerticalOffset + top);
+                    LogRichTextBox.ScrollToHorizontalOffset(0);
+                }
+            }
+        }
+
+        private void JobListBoxItem_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+
         }
     }
 }
