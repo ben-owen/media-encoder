@@ -32,6 +32,8 @@ namespace MovieEncoder
 
             PreferencesPage = new PreferencesPage();
             ProgressPage = new ProgressPage();
+
+            this.MainFrame.Navigate(PreferencesPage);
         }
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)

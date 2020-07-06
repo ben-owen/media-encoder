@@ -28,6 +28,7 @@ namespace MovieEncoder
         private Job _currentJob;
 
         private readonly ProgressReporter ProgressReporter;
+        private System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -62,23 +63,26 @@ namespace MovieEncoder
             else if (e.PropertyName == "CurrentJob")
             {
                 // scroll to that job in the task list
-                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                if (Application.Current != null)
                 {
-                    Job job = ((ProgressReporter)sender).CurrentJob;
-                    if (job != null && _currentJob != job)
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                     {
-                        for (int i = 0; i < JobListBox.Items.Count; i++)
+                        Job job = ((ProgressReporter)sender).CurrentJob;
+                        if (job != null && _currentJob != job)
                         {
-                            ListBoxItem item = (ListBoxItem)JobListBox.ItemContainerGenerator.ContainerFromIndex(i);
-                            if (item != null && item.Content == job)
+                            for (int i = 0; i < JobListBox.Items.Count; i++)
                             {
-                                item.BringIntoView();
-                                break;
+                                ListBoxItem item = (ListBoxItem)JobListBox.ItemContainerGenerator.ContainerFromIndex(i);
+                                if (item != null && item.Content == job)
+                                {
+                                    item.BringIntoView();
+                                    break;
+                                }
                             }
                         }
-                    }
-                    _currentJob = job;
-                }));
+                        _currentJob = job;
+                    }));
+                }
             }
         }
 

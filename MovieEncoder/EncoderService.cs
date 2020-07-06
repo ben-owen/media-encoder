@@ -27,8 +27,16 @@ using System.Windows.Media.Animation;
 
 namespace MovieEncoder
 {
-    class EncoderService
+    public enum BackupMode
     {
+        MakeMKV,
+        HandBrake,
+        None
+    }
+
+    public class EncoderService
+    {
+        /* -- Fields -- */
         private readonly HandBrakeService handBrakeService;
         private readonly MakeMKVService makeMKVService;
         private Thread jobThread;
@@ -38,9 +46,74 @@ namespace MovieEncoder
         private JobQueue jobQueue = new JobQueue();
         private ProgressReporter progressReporter;
 
+        /* -- Properties -- */
+        public BackupMode BackupMode { get => (BackupMode)Enum.Parse(typeof(BackupMode), Properties.Settings.Default.GlobalBackupMethod);
+            set
+            {
+                Properties.Settings.Default.GlobalBackupMethod = value.ToString();
+                Properties.Settings.Default.Save();
+            }
+        }
+
+        public BackupMode GlobalBackupMethod
+        {
+            get { return (BackupMode)Enum.Parse(typeof(BackupMode), Properties.Settings.Default.GlobalBackupMethod); }
+            set { Properties.Settings.Default.GlobalBackupMethod = value.ToString(); Properties.Settings.Default.Save(); }
+        }
+
+        public bool MakeMkvKeepFiles
+        {
+            get { return Properties.Settings.Default.MakeMkvKeepFiles; }
+            set { Properties.Settings.Default.MakeMkvKeepFiles = value; Properties.Settings.Default.Save(); }
+        }
+
+        public string MakeMkvConExePath
+        {
+            get { return Properties.Settings.Default.MakeMkvConExePath; }
+            set { Properties.Settings.Default.MakeMkvConExePath = value; Properties.Settings.Default.Save(); }
+        }
+
+        public string MakeMkvOutDir
+        {
+            get { return Properties.Settings.Default.MakeMkvOutDir; }
+            set { Properties.Settings.Default.MakeMkvOutDir = value; Properties.Settings.Default.Save(); }
+        }
+
+        public bool GlobalBackupAll
+        {
+            get { return Properties.Settings.Default.GlobalBackupAll; }
+            set { Properties.Settings.Default.GlobalBackupAll = value; Properties.Settings.Default.Save(); }
+        }
+
+        public string HandBrakeCliExePath
+        {
+            get { return Properties.Settings.Default.HandBrakeCliExePath; }
+            set { Properties.Settings.Default.HandBrakeCliExePath = value; Properties.Settings.Default.Save(); }
+        }
+
+        public string HandBrakeProfileFile
+        {
+            get { return Properties.Settings.Default.HandBrakeProfileFile; }
+            set { Properties.Settings.Default.HandBrakeProfileFile = value; Properties.Settings.Default.Save(); }
+        }
+
+        public string HandBrakeSourceDir
+        {
+            get { return Properties.Settings.Default.HandBrakeSourceDir; }
+            set { Properties.Settings.Default.HandBrakeSourceDir = value; Properties.Settings.Default.Save(); }
+        }
+
+        public string HandBrakeOutDir
+        {
+            get { return Properties.Settings.Default.HandBrakeOutDir; }
+            set { Properties.Settings.Default.HandBrakeOutDir = value; Properties.Settings.Default.Save(); }
+        }
+
+
+        /* -- Methods -- */
         public EncoderService()
         {
-            makeMKVService = new MakeMKVService(Properties.Settings.Default.MakeMkvConExePath, Properties.Settings.Default.MakeMkvOutDir, Properties.Settings.Default.MakeMkvBackupAll);
+            makeMKVService = new MakeMKVService(Properties.Settings.Default.MakeMkvConExePath, Properties.Settings.Default.MakeMkvOutDir, Properties.Settings.Default.GlobalBackupAll);
             handBrakeService = new HandBrakeService(Properties.Settings.Default.HandBrakeCliExePath, Properties.Settings.Default.HandBrakeProfileFile, Properties.Settings.Default.HandBrakeSourceDir, Properties.Settings.Default.HandBrakeOutDir);
         }
 
@@ -64,9 +137,21 @@ namespace MovieEncoder
                     if (driveInfo.DriveType == DriveType.CDRom && driveInfo.VolumeLabel != null)
                     {
                         // Run MakeMKV to backup movie
-                        BackupDiskJob job = new BackupDiskJob(makeMKVService, handBrakeService, (string)driveInfo.Name, Properties.Settings.Default.MakeMkvKeepFiles);
-                        // move backups to the top of the queue
-                        jobQueue.AddJob(job, true);
+                        Job job = null;
+                        if (BackupMode == BackupMode.MakeMKV)
+                        {
+                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, (string)driveInfo.Name, Properties.Settings.Default.MakeMkvKeepFiles);
+                        }
+                        else if (BackupMode == BackupMode.HandBrake)
+                        {
+                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)driveInfo.Name.Replace("\\", ""));
+                        }
+
+                        if (job != null)
+                        {
+                            // move backups to the top of the queue
+                            jobQueue.AddJob(job, true);
+                        }
                     }
                 } catch (IOException)
                 {
@@ -98,7 +183,7 @@ namespace MovieEncoder
             {
                 if (Utils.IsMovieFile(file))
                 {
-                    EncodeMovieJob encodeMovieJob = new EncodeMovieJob(handBrakeService, file, Properties.Settings.Default.MakeMkvKeepFiles);
+                    EncodeMovieJob encodeMovieJob = new EncodeMovieJob(handBrakeService, file, 0, Properties.Settings.Default.MakeMkvKeepFiles);
                     jobQueue.AddJob(encodeMovieJob);
                 }
             }
@@ -220,7 +305,7 @@ namespace MovieEncoder
                     // Check if we have a job for this file
                     if (!FindEncodeJobForPath(path))
                     {
-                        EncodeMovieJob job = new EncodeMovieJob(handBrakeService, path, Properties.Settings.Default.MakeMkvKeepFiles);
+                        EncodeMovieJob job = new EncodeMovieJob(handBrakeService, path, 0, Properties.Settings.Default.MakeMkvKeepFiles);
                         jobQueue.AddJob(job);
                     }
                     Console.WriteLine(path);
@@ -261,8 +346,19 @@ namespace MovieEncoder
                     {
                         Debug.WriteLine("CD has been inserted: " + mbo.Properties["VolumeName"].Value);
                         // Run MakeMKV to backup movie
-                        BackupDiskJob job = new BackupDiskJob(makeMKVService, handBrakeService, (string)mbo.Properties["DeviceID"].Value, Properties.Settings.Default.MakeMkvKeepFiles);
-                        jobQueue.AddJob(job, true);
+                        Job job = null;
+                        if (BackupMode == BackupMode.MakeMKV)
+                        {
+                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, (string)mbo.Properties["DeviceID"].Value, Properties.Settings.Default.MakeMkvKeepFiles);
+                        }
+                        else
+                        {
+                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)mbo.Properties["DeviceID"].Value.ToString().Replace("\\", ""));
+                        }
+                        if (job != null)
+                        {
+                            jobQueue.AddJob(job, true);
+                        }
                     }
                     else
                     {
@@ -332,7 +428,8 @@ namespace MovieEncoder
                             progressReporter.CurrentJob.CurrentProgress = progressReporter.CurrentJob.MaxProgress;
                         }
                         progressReporter.Reset();
-                    } catch (Exception e)
+                    } 
+                    catch (Exception e)
                     {
                         job.IsErrored = true;
                         job.MaxProgress = 1;
@@ -343,9 +440,11 @@ namespace MovieEncoder
                         progressReporter.Reset();
                     }
                     jobQueue.RemoveJob(job);
-                } else
+                } 
+                else
                 {
                     if (!progressReporter.CurrentTask.Equals("No Tasks")) {
+                        progressReporter.AddLogLine();
                         progressReporter.CurrentTask = "No Tasks";
                     }
                 }

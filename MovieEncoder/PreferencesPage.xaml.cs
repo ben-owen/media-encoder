@@ -38,63 +38,117 @@ namespace MovieEncoder
     /// </summary>
     public partial class PreferencesPage : Page, INotifyPropertyChanged
     {
-        // Properties for Settings
+        /* -- Fields -- */
+        private EncoderService _encoderService;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+
+        /* -- Properties -- */
+        public IEnumerable<BackupMode> BackupModeValues
+        {
+            get
+            {
+                return Enum.GetValues(typeof(BackupMode)).Cast<BackupMode>();
+            }
+        }
+
+        public BackupMode GlobalBackupMethod
+        {
+            get { return _encoderService.GlobalBackupMethod; }
+            set
+            {
+                _encoderService.GlobalBackupMethod = value;
+                NotifyPropertyChanged("IsBackupAllEnabled");
+                NotifyPropertyChanged("IsMakeMkvEnabled");
+                NotifyPropertyChanged("IsMakeMkvOutputDirEnabled");
+                NotifyPropertyChanged();
+            }
+        }
 
         public bool MakeMkvKeepFiles
         {
-            get { return Properties.Settings.Default.MakeMkvKeepFiles; }
+            get { return _encoderService.MakeMkvKeepFiles; }
             set { 
-                Properties.Settings.Default.MakeMkvKeepFiles = value; 
-                Properties.Settings.Default.Save();
+                _encoderService.MakeMkvKeepFiles = value; 
                 NotifyPropertyChanged("IsBackupAllEnabled");
                 NotifyPropertyChanged("IsMakeMkvOutputDirEnabled");
+                NotifyPropertyChanged();
             }
         }
 
         public string MakeMkvConExePath
         {
-            get { return Properties.Settings.Default.MakeMkvConExePath; }
-            set { Properties.Settings.Default.MakeMkvConExePath = value; Properties.Settings.Default.Save(); NotifyPropertyChanged(); }
+            get { return _encoderService.MakeMkvConExePath; }
+            set { _encoderService.MakeMkvConExePath = value; NotifyPropertyChanged(); }
         }
 
         public string MakeMkvOutDir
         {
-            get { return Properties.Settings.Default.MakeMkvOutDir; }
-            set { Properties.Settings.Default.MakeMkvOutDir = value; Properties.Settings.Default.Save(); NotifyPropertyChanged(); }
+            get { return _encoderService.MakeMkvOutDir; }
+            set { _encoderService.MakeMkvOutDir = value; NotifyPropertyChanged(); }
         }
 
-        public bool MakeMkvBackupAll
+        public bool GlobalBackupAll
         {
-            get { return Properties.Settings.Default.MakeMkvBackupAll; }
-            set { Properties.Settings.Default.MakeMkvBackupAll = value; Properties.Settings.Default.Save(); NotifyPropertyChanged(); }
+            get { return _encoderService.GlobalBackupAll; }
+            set { _encoderService.GlobalBackupAll = value; NotifyPropertyChanged(); }
         }
         
         public string HandBrakeCliExePath
         {
-            get { return Properties.Settings.Default.HandBrakeCliExePath; }
-            set { Properties.Settings.Default.HandBrakeCliExePath = value; Properties.Settings.Default.Save(); NotifyPropertyChanged(); }
+            get { return _encoderService.HandBrakeCliExePath; }
+            set { _encoderService.HandBrakeCliExePath = value; NotifyPropertyChanged(); }
         }
 
         public string HandBrakeProfileFile
         {
-            get { return Properties.Settings.Default.HandBrakeProfileFile; }
-            set { Properties.Settings.Default.HandBrakeProfileFile = value; Properties.Settings.Default.Save(); NotifyPropertyChanged(); }
+            get { return _encoderService.HandBrakeProfileFile; }
+            set { _encoderService.HandBrakeProfileFile = value; NotifyPropertyChanged(); }
         }
 
         public string HandBrakeSourceDir
         {
-            get { return Properties.Settings.Default.HandBrakeSourceDir; }
-            set { Properties.Settings.Default.HandBrakeSourceDir = value; Properties.Settings.Default.Save(); NotifyPropertyChanged(); }
+            get { return _encoderService.HandBrakeSourceDir; }
+            set { _encoderService.HandBrakeSourceDir = value; NotifyPropertyChanged(); }
         }
 
         public string HandBrakeOutDir
         {
-            get { return Properties.Settings.Default.HandBrakeOutDir; }
-            set { Properties.Settings.Default.HandBrakeOutDir = value; Properties.Settings.Default.Save(); NotifyPropertyChanged(); }
+            get { return _encoderService.HandBrakeOutDir; }
+            set { _encoderService.HandBrakeOutDir = value; NotifyPropertyChanged(); }
         }
+
+        public string StartEncodingButtonText
+        {
+            get { return _encoderService.IsStarted() ? "Stop" : "Start"; }
+        }
+
+        public bool IsServiceStopped
+        {
+            get { return !_encoderService.IsStarted(); }
+        }
+
+        public bool IsBackupAllEnabled
+        {
+            get { return IsServiceStopped == true && ((GlobalBackupMethod == BackupMode.MakeMKV && MakeMkvKeepFiles == true) || (GlobalBackupMethod == BackupMode.HandBrake)); }
+        }
+
+        public bool IsMakeMkvOutputDirEnabled
+        {
+            get { return IsServiceStopped == true && MakeMkvKeepFiles == true && GlobalBackupMethod == BackupMode.MakeMKV; }
+        }
+
+        public bool IsMakeMkvEnabled
+        {
+            get { return IsServiceStopped == true && GlobalBackupMethod == BackupMode.MakeMKV; }
+        }
+
+        /* -- Methods -- */
 
         public PreferencesPage()
         {
+            _encoderService = ((App)Application.Current).EncoderService;
             InitializeComponent();
             DataContext = this;
         }
@@ -209,12 +263,12 @@ namespace MovieEncoder
 
         private void StartEncoding_Click(object sender, RoutedEventArgs e)
         {
-            if (!((App)Application.Current).EncoderService.IsStarted())
+            if (!_encoderService.IsStarted())
             {
                 if (ValidateSettings())
                 {
 
-                    ((App)Application.Current).EncoderService.Start();
+                    _encoderService.Start();
                     MainWindow mainWindow = (MainWindow)Window.GetWindow(this);
                     NavigationService.Navigate(mainWindow.ProgressPage);
                     NotifyPropertyChanged("IsServiceStopped");
@@ -223,7 +277,7 @@ namespace MovieEncoder
             }
             else
             {
-                ((App)Application.Current).EncoderService.Stop();
+                _encoderService.Stop();
                 this.NavigationService.RemoveBackEntry();
                 NotifyPropertyChanged("IsServiceStopped");
                 NotifyPropertyChanged("IsEnabledSaveAll");
@@ -263,28 +317,6 @@ namespace MovieEncoder
             }
             return true;
         }
-
-        public string StartEncodingButtonText
-        {
-            get { return ((App)Application.Current).EncoderService.IsStarted() ? "Stop" : "Start";  }
-        }
-
-        public bool IsServiceStopped
-        {
-            get { return !((App)Application.Current).EncoderService.IsStarted(); }
-        }
-
-        public bool IsBackupAllEnabled
-        {
-            get { return IsServiceStopped == true && this.MakeMkvKeepFiles == true; }
-        }
-
-        public bool IsMakeMkvOutputDirEnabled
-        {
-            get { return IsServiceStopped == true && MakeMkvKeepFiles == true; }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
 
         private void NotifyPropertyChanged([CallerMemberName] string name = null)
         {

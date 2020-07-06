@@ -92,7 +92,8 @@
     <Compile Include="AboutWindow.xaml.cs">
       <DependentUpon>AboutWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="BackupMovieJob.cs" />
+    <Compile Include="BackupDiskHandBrakeJob.cs" />
+    <Compile Include="BackupMovieMakeMKVJob.cs" />
     <Compile Include="Utils.cs" />
     <Page Include="AboutWindow.xaml">
       <SubType>Designer</SubType>
@@ -107,7 +108,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="EncodeMovieJob.cs" />
-    <Compile Include="BackupDiskJob.cs" />
+    <Compile Include="BackupDiskMakeMKVJob.cs" />
     <Compile Include="Job.cs" />
     <Compile Include="ProgressReporter.cs" />
     <Compile Include="EncoderService.cs" />

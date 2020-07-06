@@ -20,39 +20,66 @@ using System.Threading.Tasks;
 
 namespace MovieEncoder
 {
-    class BackupMovieJob : Job
+    class BackupDiskMakeMKVJob : Job
     {
         private readonly MakeMKVService makeMKVService;
         private readonly HandBrakeService handBrakeService;
-        private readonly DiskTitle diskTitle;
+        private readonly string driveName;
         private readonly bool keepMovies;
 
-        public override string JobName => "Backup Movie " + diskTitle.FileName;
+        public override string JobName => "Backing Up Disk " + driveName;
 
-        public BackupMovieJob(MakeMKVService makeMKVService, HandBrakeService handBrakeService, DiskTitle diskTitle, bool keepMovies = false)
+        public BackupDiskMakeMKVJob(MakeMKVService makeMKVService, HandBrakeService handBrakeService, string driveName, bool keepMovies = false)
         {
-            System.Diagnostics.Debug.Assert(diskTitle != null);
             this.makeMKVService = makeMKVService;
             this.handBrakeService = handBrakeService;
-            this.diskTitle = diskTitle;
+            this.driveName = driveName;
             this.keepMovies = keepMovies;
         }
 
         public override bool RunJob(JobQueue jobQueue)
         {
-            // Backup
-            if (!makeMKVService.Backup(diskTitle, progressReporter))
+            List<DiskTitle> diskTitles = makeMKVService.GetDiskTitles(driveName, progressReporter);
+            if (diskTitles.Count > 0)
             {
-                return false;
+                if (makeMKVService.MakeMKVBackupAll == false)
+                {
+                    // only do the main movie
+                    List<DiskTitle> singleTitle = new List<DiskTitle>
+                    {
+                        PickWinner(diskTitles)
+                    };
+                    diskTitles = singleTitle;
+                }
+                else
+                {
+                    progressReporter.AppendLog($"Backing up {diskTitles.Count} movies", LogEntryType.Info);
+                }
+                foreach (DiskTitle diskTitle in diskTitles)
+                {
+                    // Backup Movie Job
+                    jobQueue.AddJob(new BackupMovieMakeMKVJob(makeMKVService, handBrakeService, diskTitle, keepMovies), true);
+                }
+
+                return true;
             }
-            if (keepMovies)
-            {
-                // This means the source of the next job is the output of the current job. These files will not be deleted after encoding.
-                jobQueue.AddJob(new EncodeMovieJob(handBrakeService, diskTitle.FullMKVPath, true));
-            }
-            return true;
+
+            return false;
         }
         
+        private DiskTitle PickWinner(List<DiskTitle> diskTitles)
+        {
+            if (diskTitles.Count == 0)
+            {
+                return null;
+            }
+
+            diskTitles.Sort(ComparDiskTitleByDuration);
+            diskTitles.Reverse();
+
+            return diskTitles.ElementAt(0);
+        }
+
         private static int ComparDiskTitleByDuration(DiskTitle x, DiskTitle y)
         {
             if (x == null)

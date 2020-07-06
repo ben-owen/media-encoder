@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -27,9 +28,10 @@ namespace MovieEncoder
 {
     public enum LogEntryType
     {
-        Normal,
         Info,
+        Debug,
         Error,
+        Trace,
     }
 
     public class ProgressReporter : INotifyPropertyChanged
@@ -53,6 +55,9 @@ namespace MovieEncoder
                 {
                     MaxProgress = _currentJob.MaxProgress;
                     CurrentProgress = _currentJob.CurrentProgress;
+
+                    // Add a new log line 
+                    AddLogLine();
                 }
                 OnPropertyChanged();
             }
@@ -97,7 +102,7 @@ namespace MovieEncoder
             set
             {
                 _currentTask = value;
-                AppendLog(value, LogEntryType.Normal);
+                AppendLog(value, LogEntryType.Info);
                 OnPropertyChanged();
                 OnPropertyChanged("Log");
             }
@@ -206,8 +211,8 @@ namespace MovieEncoder
             CurrentJob = null;
 
             IsError = false;
-            CurrentProgress = 0.0;
-            MaxProgress = 100.0;
+            //CurrentProgress = 0.0;
+            //MaxProgress = 100.0;
             Remaining = "";
         }
 
@@ -218,49 +223,85 @@ namespace MovieEncoder
             IsError = true;
         }
 
-        internal void AppendLog(string message, LogEntryType type = LogEntryType.Normal)
+        internal void AppendLog(string message, LogEntryType type = LogEntryType.Info)
         {
             string msg = message.Trim();
             if (msg != "")
             {
+                if (type == LogEntryType.Trace)
+                {
+                    Debug.WriteLine(type);
+                    return;
+                }
+
                 DateTime now = DateTime.Now;
 
+                if (System.Windows.Application.Current != null)
+                {
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        TableRow row = new TableRow
+                        {
+                            Tag = new object[] { _currentJob, type }
+                        };
+
+                        Paragraph paragraph = new Paragraph();
+                        paragraph.Margin = new Thickness(0);
+
+                        Run dtr = new Run(now.ToString("yyyy-MM-dd HH:mm:ss - "));
+                        row.Cells.Add(new TableCell(new Paragraph(dtr)));
+
+                        Run msgr = new Run(msg);
+
+                        row.Cells.Add(new TableCell(new Paragraph(msgr)));
+
+                        ColorRow(row, true);
+                        _logTable.RowGroups[0].Rows.Add(row);
+
+                        // Add log position
+                        if (_currentJob != null && !_jobLogPosition.ContainsKey(_currentJob))
+                        {
+                            _jobLogPosition.Add(_currentJob, row);
+                        }
+
+                        // Setup size for columns
+                        Size measure = MeasureLogDocumentString(dtr, dtr.Text);
+                        Size dtSize = MeasureLogDocumentString(dtr, dtr.Text);
+                        if (_logTable.Columns[0].Width.Value < dtSize.Width)
+                        {
+                            _logTable.Columns[0].Width = new GridLength(dtSize.Width);
+                        }
+
+                        // Do not overload the system
+                        System.Threading.Thread.Sleep(10);
+                        OnPropertyChanged("LogDocument");
+                    }));
+                }
+            }
+        }
+
+        public void AddLogLine()
+        {
+            if (System.Windows.Application.Current != null)
+            {
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     TableRow row = new TableRow
                     {
-                        Tag = new object[] { _currentJob, type }
+                        //Background = Brushes.DarkGray,
+                        FontSize = 0.004,
                     };
+                    TableCell cell = new TableCell
+                    {
+                        ColumnSpan = 2,
+                        BorderBrush = Brushes.DarkGray,
+                        BorderThickness = new Thickness(0.5),
+                        Padding = new Thickness(0),
+                    };
+                    row.Cells.Add(cell);
 
-                    Paragraph paragraph = new Paragraph();
-                    paragraph.Margin = new Thickness(0);
-
-                    Run dtr = new Run(now.ToString("yyyy-MM-dd HH:mm:ss - "));
-                    row.Cells.Add(new TableCell(new Paragraph(dtr)));
-
-                    Run msgr = new Run(msg);
-
-                    row.Cells.Add(new TableCell(new Paragraph(msgr)));
-
-                    ColorRow(row, true);
                     _logTable.RowGroups[0].Rows.Add(row);
 
-                    // Add log position
-                    if (_currentJob != null && !_jobLogPosition.ContainsKey(_currentJob))
-                    {
-                        _jobLogPosition.Add(_currentJob, row);
-                    }
-
-                    // Setup size for columns
-                    Size measure = MeasureLogDocumentString(dtr, dtr.Text);
-                    Size dtSize = MeasureLogDocumentString(dtr, dtr.Text);
-                    if (_logTable.Columns[0].Width.Value < dtSize.Width)
-                    {
-                        _logTable.Columns[0].Width = new GridLength(dtSize.Width);
-                    }
-
-                    // Do not overload the system
-                    System.Threading.Thread.Sleep(10);
                     OnPropertyChanged("LogDocument");
                 }));
             }
@@ -277,34 +318,36 @@ namespace MovieEncoder
 
         private void ColorRow(TableRow row, bool normal = true)
         {
-            System.Diagnostics.Debug.Assert(row.Cells.Count == 2);
             System.Windows.Application.Current.Dispatcher.Invoke(new Action(() =>
             {
-                Block dt = row.Cells[0].Blocks.FirstBlock;
-                Block entry = row.Cells[1].Blocks.FirstBlock;
-                Job job = (Job)((object[])row.Tag)[0];
-                LogEntryType type = (LogEntryType)((object[])row.Tag)[1];
-                if (normal == true)
+                if (row.Cells.Count == 2)
                 {
-                    dt.Foreground = Brushes.Gray;
-
-                    switch (type)
+                    Block dt = row.Cells[0].Blocks.FirstBlock;
+                    Block entry = row.Cells[1].Blocks.FirstBlock;
+                    Job job = (Job)((object[])row.Tag)[0];
+                    LogEntryType type = (LogEntryType)((object[])row.Tag)[1];
+                    if (normal == true)
                     {
-                        case LogEntryType.Error:
-                            entry.Foreground = Brushes.Red;
-                            break;
-                        case LogEntryType.Normal:
-                            entry.Foreground = Brushes.Black;
-                            break;
-                        case LogEntryType.Info:
-                            entry.Foreground = Brushes.Gray;
-                            break;
+                        dt.Foreground = Brushes.Gray;
+
+                        switch (type)
+                        {
+                            case LogEntryType.Error:
+                                entry.Foreground = Brushes.Red;
+                                break;
+                            case LogEntryType.Info:
+                                entry.Foreground = Brushes.Black;
+                                break;
+                            case LogEntryType.Debug:
+                                entry.Foreground = Brushes.Gray;
+                                break;
+                        }
                     }
-                }
-                else
-                {
-                    dt.Foreground = Brushes.LightGray;
-                    entry.Foreground = Brushes.Gray;
+                    else
+                    {
+                        dt.Foreground = Brushes.LightGray;
+                        entry.Foreground = Brushes.Gray;
+                    }
                 }
             }));
         }

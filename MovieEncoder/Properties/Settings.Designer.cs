@@ -74,12 +74,12 @@ namespace MovieEncoder.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool MakeMkvBackupAll {
+        public bool GlobalBackupAll {
             get {
-                return ((bool)(this["MakeMkvBackupAll"]));
+                return ((bool)(this["GlobalBackupAll"]));
             }
             set {
-                this["MakeMkvBackupAll"] = value;
+                this["GlobalBackupAll"] = value;
             }
         }
         
@@ -116,6 +116,18 @@ namespace MovieEncoder.Properties {
             }
             set {
                 this["HandBrakeSourceDir"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("MakeMKV")]
+        public string GlobalBackupMethod {
+            get {
+                return ((string)(this["GlobalBackupMethod"]));
+            }
+            set {
+                this["GlobalBackupMethod"] = value;
             }
         }
     }

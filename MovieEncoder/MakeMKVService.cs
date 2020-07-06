@@ -166,7 +166,7 @@ namespace MovieEncoder
                         }
                         else
                         {
-                            progressReporter.AppendLog(msg[4].Replace("\"", ""), LogEntryType.Info);
+                            progressReporter.AppendLog(msg[4].Replace("\"", ""), LogEntryType.Debug);
                         }
                     }
                     else if (line.StartsWith("PRGT:"))
@@ -273,7 +273,7 @@ namespace MovieEncoder
                             }
                             else
                             {
-                                progressReporter.AppendLog(msg[3].Replace("\"", ""), LogEntryType.Info);
+                                progressReporter.AppendLog(msg[3].Replace("\"", ""), LogEntryType.Debug);
                             }
 
                             //progressReporter.AppendLog(msg[3].Replace("\"", ""), LogEntryType.Info);

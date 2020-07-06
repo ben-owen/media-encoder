@@ -33,5 +33,6 @@ namespace MovieEncoder
         internal int Chapters;
         internal int Seconds;
         internal long Bytes;
+        internal bool MainMovie;
     }
 }
