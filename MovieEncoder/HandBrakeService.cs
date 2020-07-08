@@ -11,34 +11,199 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows.Documents;
 
 namespace MovieEncoder
 {
-    class HandBrakeService
+    public class HandBrakeService
     {
-        private enum HandBrakeJsonType
+        public enum HandBrakeJsonType
         {
             Version,
             Progress,
             TitleSet
         }
-        private enum ProcessingState
+        public enum ProcessingState
         {
             None,
             Encoding,
             Scanning,
             Muxing
+        }
+        public enum OutputType
+        {
+            MKV,
+            MP4
+        }
+
+        public class HBVersion
+        {
+            public class VersionData
+            {
+                public int Major { get; set; }
+                public int Minor { get; set; }
+                public int Point { get; set; }
+            }
+
+            public string Arch { get; set; }
+            public string Name { get; set; }
+            public bool Official { get; set; }
+            public string RepoDate { get; set; }
+            public string RepoHash { get; set; }
+            public string System { get; set; }
+            public string Type { get; set; }
+            public VersionData Version { get; set; }
+            public string VersionString { get; set; }
+        }
+
+        public class HBTitleSet
+        {
+            public int MainFeature { get; set; }
+            public TitleListData[] TitleList { get; set; }
+            public class TitleListData
+            {
+                public int AngleCount { get; set; }
+                public AudioListData[] AudioList { get; set; }
+                public class AudioListData { }
+                public ChapterListData[] ChapterList { get; set; }
+                public class ChapterListData
+                {
+                    public DurationData Duration { get; set; }
+                    public string Name { get; set; }
+                }
+                public DurationData Duration { get; set; }
+                public class DurationData
+                {
+                    public int Hours { get; set; }
+                    public int Minutes { get; set; }
+                    public int Seconds { get; set; }
+                    public int Ticks { get; set; }
+
+                }
+                public FrameRateData FrameRate { get; set; }
+                public class FrameRateData
+                {
+                    public int Den { get; set; }
+                    public int Num { get; set; }
+                };
+                public GeometryData Geometry { get; set; }
+                public class GeometryData
+                {
+                    public int Height { get; set; }
+                    public PARData PAR { get; set; }
+                    public class PARData
+                    {
+                        public int Den { get; set; }
+                        public int Num { get; set; }
+                    }
+                    public int Width { get; set; }
+                }
+                public int Index { get; set; }
+                public bool InterlaceDetected { get; set; }
+                public string Name { get; set; }
+                public string Path { get; set; }
+                public int Playlist { get; set; }
+                //"SubtitleList": [],
+                public int Type { get; set; }
+                public string VideoCodec { get; set; }
+            }
+        }
+
+        public class HBProgress
+        {
+            public class ProgressState
+            {
+                public double Progress { get; set; }
+            }
+
+            public class ScanningState : ProgressState
+            {
+                public int Preview { get; set; }
+                public int PreviewCount { get; set; }
+                public int SequenceID { get; set; }
+                public int Title { get; set; }
+                public int TitleCount { get; set; }
+            }
+
+            public class WorkingState : ProgressState
+            {
+                public int ETASeconds { get; set; }
+                public int Hours { get; set; }
+                public int Minutes { get; set; }
+                public int Pass { get; set; }
+                public int PassCount { get; set; }
+                public int PassID { get; set; }
+                public int Paused { get; set; }
+                public double Rate { get; set; }
+                public double RateAvg { get; set; }
+                public int Seconds { get; set; }
+                public int SequenceID { get; set; }
+            }
+
+            public ScanningState Scanning { get; set; }
+            public WorkingState Working { get; set; }
+            public ProgressState Muxing { get; set; }
+            public string State { get; set; }
+
+            public double GetCurrentProgress()
+            {
+                switch (State)
+                {
+                    case "WORKING":
+                        // Calc the current progess as part of the total pass
+                        double progress = this.Working.Progress;
+                        if (Working.PassCount > 0)
+                        {
+                            progress = ((Working.Pass - 1) / (double)Working.PassCount) + (Working.Progress / (double)Working.PassCount);
+                        }
+                        return progress;
+                    case "SCANNING":
+                        return this.Scanning.Progress;
+                    case "MUXING":
+                        return this.Muxing.Progress;
+                }
+                return 0.0;
+            }
+
+            public string GetETAString()
+            {
+                if (State == "WORKING")
+                {
+                    if (Working.ETASeconds != 0 || Working.Pass > 1)
+                    {
+                        StringBuilder eta = new StringBuilder();
+                        if (Working.PassCount > 0)
+                        {
+                            if (Working.ETASeconds != 0)
+                            {
+                                eta.Append(Utils.GetDuration(Working.ETASeconds));
+                                eta.Append(" for ");
+                            }
+                            eta.Append("Pass ");
+                            eta.Append(Working.Pass);
+                            eta.Append(" of ");
+                            eta.Append(Working.PassCount);
+                            return eta.ToString();
+                        }
+                        else
+                        {
+                            return Utils.GetDuration(Working.ETASeconds);
+                        }
+                    }
+                }
+                return null;
+            }
+
+            public string GetStateTitle()
+            {
+                return State[0] + State.Substring(1).ToLower();
+            }
         }
 
         private Process handBrakeProcess = null;
@@ -49,13 +214,17 @@ namespace MovieEncoder
 
         public readonly string HandBrakeSourceDir;
         public readonly string HandBrakeOutDir;
+        public readonly OutputType MovieOutputType;
+        public readonly bool ForceSubtitles;
 
-        public HandBrakeService(string handBrakeCliExePath, string handBrakeProfileFile, string handBrakeSourceDir, string handBrakeOutDir)
+        public HandBrakeService(string handBrakeCliExePath, string handBrakeProfileFile, string handBrakeSourceDir, string handBrakeOutDir, OutputType outputType, bool forceSubtitles)
         {
-            this.HandBrakeCliExePath = handBrakeCliExePath;
-            this.HandBrakeProfileFile = handBrakeProfileFile;
-            this.HandBrakeSourceDir = handBrakeSourceDir;
-            this.HandBrakeOutDir = handBrakeOutDir;
+            HandBrakeCliExePath = handBrakeCliExePath;
+            HandBrakeProfileFile = handBrakeProfileFile;
+            HandBrakeSourceDir = handBrakeSourceDir;
+            HandBrakeOutDir = handBrakeOutDir;
+            MovieOutputType = outputType;
+            ForceSubtitles = forceSubtitles;
         }
 
         internal List<DiskTitle> Scan(string file, int titleIndex, bool allTitles, ProgressReporter progressReporter)
@@ -74,8 +243,10 @@ namespace MovieEncoder
             {
                 cmdParams += $" --title {titleIndex}";
             }
-            handBrakeProcess = new Process();
-            handBrakeProcess.StartInfo = new ProcessStartInfo(HandBrakeCliExePath, cmdParams);
+            handBrakeProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo(HandBrakeCliExePath, cmdParams)
+            };
             handBrakeProcess.StartInfo.CreateNoWindow = true;
             handBrakeProcess.StartInfo.RedirectStandardOutput = true;
             handBrakeProcess.StartInfo.RedirectStandardError = true;
@@ -110,6 +281,8 @@ namespace MovieEncoder
                 {
                     error.Append(e.Data);
                     error.Append("\r\n");
+
+                    progressReporter.AppendLog(e.Data, LogEntryType.Trace);
                 }
             );
             handBrakeProcess.Start();
@@ -127,7 +300,7 @@ namespace MovieEncoder
 
             if (!success && !wasKilled)
             {
-                progressReporter.AppendLog($"Output from Handbrake\r\n{error.ToString()}", LogEntryType.Debug);
+                progressReporter.AppendLog($"Output from Handbrake\r\n{error}", LogEntryType.Debug);
             }
             return diskTitles;
         }
@@ -164,14 +337,19 @@ namespace MovieEncoder
             StopRunningProcess();
             wasKilled = false;
 
-            string cmdParams = $"--preset-import-file \"{HandBrakeProfileFile}\" -i \"{inputFile}\" -o \"{outputFile}\" --format av_mkv --subtitle scan --subtitle-forced --json";
+            string outputFormat = MovieOutputType == OutputType.MP4 ? "av_mp4" : "av_mkv";
+            string subtitles = ForceSubtitles == true ? "--subtitle scan --subtitle-forced" : "";
+
+            string cmdParams = $"--preset-import-file \"{HandBrakeProfileFile}\" -i \"{inputFile}\" -o \"{outputFile}\" --format {outputFormat} {subtitles} --json";
             if (titleIndex != 0)
             {
                 cmdParams += $" --title {titleIndex}";
             }
 
-            handBrakeProcess = new Process();
-            handBrakeProcess.StartInfo = new ProcessStartInfo(HandBrakeCliExePath, cmdParams);
+            handBrakeProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo(HandBrakeCliExePath, cmdParams)
+            };
             handBrakeProcess.StartInfo.CreateNoWindow = true;
             handBrakeProcess.StartInfo.RedirectStandardOutput = true;
             handBrakeProcess.StartInfo.RedirectStandardInput = true;
@@ -206,6 +384,8 @@ namespace MovieEncoder
                 {
                     error.Append(e.Data);
                     error.Append("\r\n");
+
+                    progressReporter.AppendLog(e.Data, LogEntryType.Trace);
                 }
             );
             handBrakeProcess.Start();
@@ -220,9 +400,12 @@ namespace MovieEncoder
             }
 
             ProcessJsonString(progressReporter, diskTitles, json, jsonType, processingState, stopwatch);
-            if (!success && !wasKilled)
+            if (!success)
             {
-                progressReporter.AppendLog($"Output from Handbrake\r\n{error.ToString()}", LogEntryType.Debug);
+                if (!wasKilled)
+                {
+                    progressReporter.AppendLog($"Output from Handbrake\r\n{error}", LogEntryType.Debug);
+                }
                 File.Delete(outputFile);
             }
             return success;
@@ -259,8 +442,6 @@ namespace MovieEncoder
             {
                 json.Append(line);
             }
-            //Debug.WriteLine(line);
-            System.Threading.Thread.Sleep(100);
         }
 
         private static ProcessingState ProcessJsonString(ProgressReporter progressReporter, List<DiskTitle> diskTitles, StringBuilder json, HandBrakeJsonType jsonType, ProcessingState processingState, Stopwatch stopwatch)
@@ -272,121 +453,70 @@ namespace MovieEncoder
             switch (jsonType)
             {
                 case HandBrakeJsonType.Version:
-                    JToken jVersion = JToken.Parse(json.ToString());
-                    progressReporter.AppendLog($"Using {jVersion["Name"]} {jVersion["VersionString"]} {jVersion["Arch"]}", LogEntryType.Debug);
+                    HBVersion jVersion = JsonSerializer.Deserialize<HBVersion>(json.ToString());
+                    //JToken jVersion = JToken.Parse(json.ToString());
+                    progressReporter.AppendLog($"Using {jVersion.Name} {jVersion.VersionString} {jVersion.Arch}", LogEntryType.Debug);
                     break;
                 case HandBrakeJsonType.Progress:
                     // process
-                    JToken jProgress = JToken.Parse(json.ToString());
-                    string state = (string)jProgress["State"];
-                    string stateKey = "";
-                    if (state == "WORKING")
+                    HBProgress jProgress = JsonSerializer.Deserialize<HBProgress>(json.ToString());
+                    if (jProgress.State == "WORKING")
                     {
-                        stateKey = "Working";
                         if (processingState != ProcessingState.Encoding)
                         {
                             progressReporter.CurrentTask = "Encoding";
                             processingState = ProcessingState.Encoding;
                         }
                     }
-                    else if (state == "SCANNING")
+                    else if (jProgress.State == "SCANNING")
                     {
-                        stateKey = "Scanning";
                         if (processingState != ProcessingState.Scanning)
                         {
                             progressReporter.CurrentTask = "Scanning";
                             processingState = ProcessingState.Scanning;
                         }
                     }
-                    else if (state == "MUXING")
+                    else if (jProgress.State == "MUXING")
                     {
-                        stateKey = "Muxing";
                         if (processingState != ProcessingState.Muxing)
                         {
                             progressReporter.CurrentTask = "Muxing";
                             processingState = ProcessingState.Muxing;
                         }
+                        // TODO Remove
+                        Debug.WriteLine(json.ToString());
+                    } else
+                    {
+                        // TODO Remove
+                        Debug.WriteLine(json.ToString());
                     }
                     if (stopwatch.ElapsedMilliseconds > 1000)
                     {
-                        if (stateKey != "")
-                            progressReporter.CurrentProgress = ((double)jProgress[stateKey]["Progress"] * 100);
-
-                        if (jProgress[stateKey] != null)
-                        {
-                            if (jProgress[stateKey]["ETASeconds"] != null)
-                            {
-                                progressReporter.Remaining = Utils.GetDuration((int)jProgress[stateKey]["ETASeconds"]);
-                            }
-                        }
+                        progressReporter.CurrentProgress = (jProgress.GetCurrentProgress() * 100);
+                        progressReporter.Remaining = jProgress.GetETAString();
                         stopwatch.Restart();
                     }
                     break;
                 case HandBrakeJsonType.TitleSet:
-                    JToken jTitleSet = JToken.Parse(json.ToString());
-                    int mainFeature = -1;
-                    if (jTitleSet["MainFeature"] != null)
+                    HBTitleSet jTitleSet = JsonSerializer.Deserialize<HBTitleSet>(json.ToString());
+                    int mainFeature = jTitleSet.MainFeature;
+                    foreach (HBTitleSet.TitleListData jTitle in jTitleSet.TitleList)
                     {
-                        mainFeature = (int)jTitleSet["MainFeature"];
-                    }
-                    if (jTitleSet["TitleList"] != null && ((JArray)jTitleSet["TitleList"]).Count > 0)
-                    {
-                        foreach (JToken jTitle in (JArray)jTitleSet["TitleList"])
+                        DiskTitle diskTitle = new DiskTitle();
+                        diskTitle.TitleName = jTitle.Name;
+                        diskTitle.FullMKVPath = jTitle.Path;
+                        diskTitle.FileName = Path.GetFileName(diskTitle.FullMKVPath);
+                        diskTitle.TitleIndex = jTitle.Index;
+                        if (mainFeature == -1 || diskTitle.TitleIndex == mainFeature)
                         {
-                            DiskTitle diskTitle = new DiskTitle();
-                            if (jTitle["Name"] != null)
-                            {
-                                diskTitle.TitleName = (string)jTitle["Name"];
-                            }
-                            if (jTitle["Path"] != null)
-                            {
-                                diskTitle.FullMKVPath = (string)jTitle["Path"];
-                                diskTitle.FileName = Path.GetFileName(diskTitle.FullMKVPath);
-                            }
-                            if (jTitle["Index"] != null)
-                            {
-                                diskTitle.TitleIndex = (int)jTitle["Index"];
-                                if (mainFeature == -1 || diskTitle.TitleIndex == mainFeature)
-                                {
-                                    diskTitle.MainMovie = true;
-                                }
-                            }
-                            if (jTitle["Geometry"] != null)
-                            {
-                                if (jTitle["Geometry"]["Height"] != null)
-                                {
-                                    diskTitle.HorizontalResolution = (int)jTitle["Geometry"]["Height"];
-                                }
-                                if (jTitle["Geometry"]["Width"] != null)
-                                {
-                                    diskTitle.VerticalResolution = (int)jTitle["Geometry"]["Width"];
-                                }
-                            }
-                            if (jTitle["VideoCodec"] != null)
-                            {
-                                diskTitle.VideoCodec = (string)jTitle["VideoCodec"];
-                            }
-                            if (jTitle["Duration"] != null)
-                            {
-                                int hours = 0;
-                                if (jTitle["Duration"]["Hours"] != null)
-                                {
-                                    hours = (int)jTitle["Duration"]["Hours"];
-                                }
-                                int minutes = 0;
-                                if (jTitle["Duration"]["Minutes"] != null)
-                                {
-                                    minutes = (int)jTitle["Duration"]["Minutes"];
-                                }
-                                int seconds = 0;
-                                if (jTitle["Duration"]["Seconds"] != null)
-                                {
-                                    seconds = (int)jTitle["Duration"]["Seconds"];
-                                }
-                                diskTitle.Seconds = (hours * 60 * 60) + (minutes * 60) + seconds;
-                            }
-                            diskTitles.Add(diskTitle);
+                            diskTitle.MainMovie = true;
                         }
+                        diskTitle.HorizontalResolution = jTitle.Geometry.Height;
+                        diskTitle.VerticalResolution = jTitle.Geometry.Width;
+                        diskTitle.VideoCodec = jTitle.VideoCodec;
+                        diskTitle.Seconds = (jTitle.Duration.Hours * 60 * 60) + (jTitle.Duration.Minutes * 60) + jTitle.Duration.Seconds;
+                        diskTitle.Chapters = jTitle.ChapterList.Length;
+                        diskTitles.Add(diskTitle);
                     }
                     break;
             }

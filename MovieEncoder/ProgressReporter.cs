@@ -162,8 +162,28 @@ namespace MovieEncoder
         {
             System.Windows.Application.Current.Dispatcher.Invoke(new Action(() =>
             {
-                LogDocument.Blocks.Clear();
-                CreateLogDocumentTable();
+                // find the current job log
+                List<TableRow> jobRows = new List<TableRow>();
+                if (_currentJob != null)
+                {
+                    foreach (TableRow row in _logTable.RowGroups[0].Rows)
+                    {
+                        if (row.Tag != null && ((object[])row.Tag)[0] == _currentJob)
+                        {
+                            jobRows.Add(row);
+                        }
+                    }
+                }
+                _logTable.RowGroups[0].Rows.Clear();
+                if (jobRows.Count > 0)
+                {
+                    foreach (TableRow row in jobRows)
+                    {
+                        _logTable.RowGroups[0].Rows.Add(row);
+                    }
+                }
+                //_logTable.RowGroups.Add(new TableRowGroup());
+                //CreateLogDocumentTable();
             }));
 
             JobQueue.ClearJobLog();
@@ -211,9 +231,9 @@ namespace MovieEncoder
             CurrentJob = null;
 
             IsError = false;
-            //CurrentProgress = 0.0;
-            //MaxProgress = 100.0;
             Remaining = "";
+            OnPropertyChanged("MaxProgress");
+            OnPropertyChanged("CurrentProgress");
         }
 
         internal void AddError(string message)
@@ -225,12 +245,16 @@ namespace MovieEncoder
 
         internal void AppendLog(string message, LogEntryType type = LogEntryType.Info)
         {
+            if (message == null)
+            {
+                return;
+            }
             string msg = message.Trim();
             if (msg != "")
             {
                 if (type == LogEntryType.Trace)
                 {
-                    Debug.WriteLine(type);
+                    Debug.WriteLine(message);
                     return;
                 }
 
@@ -272,8 +296,6 @@ namespace MovieEncoder
                             _logTable.Columns[0].Width = new GridLength(dtSize.Width);
                         }
 
-                        // Do not overload the system
-                        System.Threading.Thread.Sleep(10);
                         OnPropertyChanged("LogDocument");
                     }));
                 }
@@ -288,8 +310,8 @@ namespace MovieEncoder
                 {
                     TableRow row = new TableRow
                     {
-                        //Background = Brushes.DarkGray,
                         FontSize = 0.004,
+                        Tag = new object[] { _currentJob, LogEntryType.Trace }
                     };
                     TableCell cell = new TableCell
                     {

@@ -14,15 +14,15 @@
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
-            <RowDefinition Height="350"/>
-            <RowDefinition Height="40*" MinHeight="40"/>
+            <RowDefinition Height="354"/>
+            <RowDefinition MinHeight="40"/>
         </Grid.RowDefinitions>
 
         <Border Grid.Column="0" Grid.Row="0" Padding="5" Background="#4E87D4" Margin="10,0,10,0">
             <Label VerticalAlignment="Top" Foreground="White" Content="Preferences"/>
         </Border>
 
-        <GroupBox Header="MakeMKV" Height="100" Margin="10,0,10,179" Grid.Row="1" VerticalAlignment="Bottom">
+        <GroupBox Header="MakeMKV" Margin="10,71,10,0" Grid.Row="1" Height="100" VerticalAlignment="Top">
             <Grid>
                 <TextBlock HorizontalAlignment="Left" Margin="10,8,0,0" TextWrapping="Wrap" Text="MakeMKVcon.exe:" VerticalAlignment="Top"/>
                 <TextBox x:Name="MakeMkvPathText" Height="22" Margin="112,5,45,0" TextWrapping="Wrap" VerticalAlignment="Top" IsEnabled="{Binding ElementName=Preferences,Path=IsMakeMkvEnabled}" Text="{Binding MakeMkvConExePath}"/>
@@ -35,7 +35,7 @@
             </Grid>
         </GroupBox>
 
-        <GroupBox Header="HandBrake" Height="144" Margin="10,0,10,30" Grid.Row="1" VerticalAlignment="Bottom">
+        <GroupBox Header="HandBrake" Height="178" Margin="10,176,10,0" Grid.Row="1" VerticalAlignment="Top">
             <Grid>
                 <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="HandBrakeCLI.exe:" VerticalAlignment="Top" Margin="10,8,0,0"/>
                 <TextBox x:Name="HandBrakeCliPathText" Height="22"  TextWrapping="Wrap" VerticalAlignment="Top" Margin="112,5,45,0" IsEnabled="{Binding IsServiceStopped}" Text="{Binding HandBrakeCliExePath}"/>
@@ -45,23 +45,26 @@
                 <TextBox x:Name="HandBrakeProfileFileText" Height="22"  TextWrapping="Wrap" VerticalAlignment="Top" Margin="112,32,45,0" IsEnabled="{Binding IsServiceStopped}" Text="{Binding HandBrakeProfileFile}"/>
                 <Button x:Name="handbrakeProfileFileButton" Content="..." Margin="0,33,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" Click="HandbrakeProfileFileButton_Click" IsEnabled="{Binding ElementName=Preferences,Path=IsServiceStopped}"/>
 
-                <TextBlock HorizontalAlignment="Left" Margin="10,97.421,0,0" TextWrapping="Wrap" Text="Output Dir:" VerticalAlignment="Top"/>
-                <TextBox x:Name="HandBrakeOutDirText" Height="22" Margin="112,94.437,45,0" TextWrapping="Wrap" VerticalAlignment="Top" IsEnabled="{Binding IsServiceStopped}" Text="{Binding HandBrakeOutDir}"/>
-                <Button x:Name="handbrakeOutDirButton" Content="..." Margin="0,95.421,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" Click="HandbrakeOutDirButton_Click" IsEnabled="{Binding ElementName=Preferences,Path=IsServiceStopped}"/>
+                <TextBlock HorizontalAlignment="Left" Margin="10,132,0,0" TextWrapping="Wrap" Text="Output Dir:" VerticalAlignment="Top"/>
+                <TextBox x:Name="HandBrakeOutDirText" Height="22" Margin="112,129,45,0" TextWrapping="Wrap" VerticalAlignment="Top" IsEnabled="{Binding IsServiceStopped}" Text="{Binding HandBrakeOutDir}"/>
+                <Button x:Name="handbrakeOutDirButton" Content="..." Margin="0,130,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" Click="HandbrakeOutDirButton_Click" IsEnabled="{Binding ElementName=Preferences,Path=IsServiceStopped}"/>
                 <TextBlock HorizontalAlignment="Left" Margin="10,62,0,0" TextWrapping="Wrap" Text="Source Dir:" VerticalAlignment="Top"/>
                 <TextBox x:Name="MkvSourceDirText" Height="22" Margin="112,59,45,0" TextWrapping="Wrap" VerticalAlignment="Top" IsEnabled="{Binding IsServiceStopped}" Text="{Binding HandBrakeSourceDir}"/>
                 <Button x:Name="mkvSourceDirButton" Content="..." Margin="0,60,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" Click="MkvSourceDirButton_Click" IsEnabled="{Binding IsServiceStopped, ElementName=Preferences}"/>
                 <TextBlock HorizontalAlignment="Left" Margin="112.649,81,0,0" TextWrapping="Wrap" Text="Files will be deleted after encoding" VerticalAlignment="Top" FontSize="9" Width="189.563" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                <ComboBox HorizontalAlignment="Left" Margin="112,98,0,0" VerticalAlignment="Top" Width="110" IsEnabled="{Binding IsServiceStopped}" SelectedItem="{Binding ElementName=Preferences,Path=HandBrakeOutputType}" ItemsSource="{Binding ElementName=Preferences,Path=HandBrakeOutputTypeValues}"/>
+                <TextBlock HorizontalAlignment="Left" Margin="10,101,0,0" TextWrapping="Wrap" Text="Output Type:" VerticalAlignment="Top"/>
+                <CheckBox Content="Force Subtitles" HorizontalAlignment="Left" Margin="238,102,0,0" VerticalAlignment="Top" IsEnabled="{Binding IsServiceStopped}" IsChecked="{Binding HandBrakeForceSubtitles}"/>
             </Grid>
         </GroupBox>
         <Button x:Name="startEncoding" Grid.Column="0" Grid.Row="2" Margin="0,0,10,0" Width="125" HorizontalAlignment="Right" Content="{Binding StartEncodingButtonText, ElementName=Preferences}" Click="StartEncoding_Click" Height="25" VerticalAlignment="Bottom"/>
-        <GroupBox Header="Global" Height="54" Margin="10,0,10,283" Grid.Row="1" VerticalAlignment="Bottom">
+        <GroupBox Header="Global" Margin="10,13,10,0" Grid.Row="1" Height="54" VerticalAlignment="Top">
             <Grid>
                 <TextBlock HorizontalAlignment="Left" Margin="10,8,0,0" TextWrapping="Wrap" Text="Backup Method:" VerticalAlignment="Top"/>
-                <ComboBox x:Name="BackupMethodComboBox" HorizontalAlignment="Left" Margin="112,5,0,0" VerticalAlignment="Top" Width="193"
+                <ComboBox x:Name="BackupMethodComboBox" HorizontalAlignment="Left" Margin="112,5,0,0" VerticalAlignment="Top" Width="110" IsEnabled="{Binding IsServiceStopped}" 
                           SelectedItem="{Binding ElementName=Preferences,Path=GlobalBackupMethod}" ItemsSource="{Binding ElementName=Preferences,Path=BackupModeValues}">
                 </ComboBox>
-                <CheckBox x:Name="GlobalBackupAllCheckBox" Content="Backup All" HorizontalAlignment="Left" Margin="327,8,0,0" VerticalAlignment="Top" IsEnabled="{Binding IsBackupAllEnabled}" IsChecked="{Binding GlobalBackupAll}"/>
+                <CheckBox x:Name="GlobalBackupAllCheckBox" Content="Backup All" HorizontalAlignment="Left" Margin="238,8,0,0" VerticalAlignment="Top" IsEnabled="{Binding IsBackupAllEnabled}" IsChecked="{Binding GlobalBackupAll}"/>
             </Grid>
         </GroupBox>
     </Grid>

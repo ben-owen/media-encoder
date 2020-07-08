@@ -39,7 +39,7 @@ namespace MovieEncoder
     public partial class PreferencesPage : Page, INotifyPropertyChanged
     {
         /* -- Fields -- */
-        private EncoderService _encoderService;
+        private readonly EncoderService _encoderService;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -53,6 +53,14 @@ namespace MovieEncoder
             }
         }
 
+        public IEnumerable<HandBrakeService.OutputType> HandBrakeOutputTypeValues
+        {
+            get
+            {
+                return Enum.GetValues(typeof(HandBrakeService.OutputType)).Cast<HandBrakeService.OutputType>();
+            }
+        }
+        
         public BackupMode GlobalBackupMethod
         {
             get { return _encoderService.GlobalBackupMethod; }
@@ -69,8 +77,9 @@ namespace MovieEncoder
         public bool MakeMkvKeepFiles
         {
             get { return _encoderService.MakeMkvKeepFiles; }
-            set { 
-                _encoderService.MakeMkvKeepFiles = value; 
+            set
+            {
+                _encoderService.MakeMkvKeepFiles = value;
                 NotifyPropertyChanged("IsBackupAllEnabled");
                 NotifyPropertyChanged("IsMakeMkvOutputDirEnabled");
                 NotifyPropertyChanged();
@@ -94,7 +103,7 @@ namespace MovieEncoder
             get { return _encoderService.GlobalBackupAll; }
             set { _encoderService.GlobalBackupAll = value; NotifyPropertyChanged(); }
         }
-        
+
         public string HandBrakeCliExePath
         {
             get { return _encoderService.HandBrakeCliExePath; }
@@ -117,6 +126,18 @@ namespace MovieEncoder
         {
             get { return _encoderService.HandBrakeOutDir; }
             set { _encoderService.HandBrakeOutDir = value; NotifyPropertyChanged(); }
+        }
+
+        public HandBrakeService.OutputType HandBrakeOutputType
+        {
+            get { return _encoderService.HandBrakeOutputType; }
+            set { _encoderService.HandBrakeOutputType = value; NotifyPropertyChanged(); }
+        }
+
+        public bool HandBrakeForceSubtitles
+        {
+            get { return _encoderService.HandBrakeForceSubtitles; }
+            set { _encoderService.HandBrakeForceSubtitles = value; NotifyPropertyChanged(); }
         }
 
         public string StartEncodingButtonText
@@ -144,13 +165,30 @@ namespace MovieEncoder
             get { return IsServiceStopped == true && GlobalBackupMethod == BackupMode.MakeMKV; }
         }
 
+        public ProgressReporter ProgressReporter { get; }
+
         /* -- Methods -- */
 
         public PreferencesPage()
         {
             _encoderService = ((App)Application.Current).EncoderService;
-            InitializeComponent();
+            ProgressReporter = ((App)Application.Current).ProgressReporter;
+
             DataContext = this;
+            InitializeComponent();
+
+            ProgressReporter.PropertyChanged += ProgressReporter_PropertyChanged;
+        }
+
+        private void ProgressReporter_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "Shutdown")
+            {
+                NotifyPropertyChanged("IsServiceStopped");
+                NotifyPropertyChanged("IsEnabledSaveAll");
+                NotifyPropertyChanged("IsBackupAllEnabled");
+                NotifyPropertyChanged("StartEncodingButtonText");
+            }
         }
 
         private void MkvSourceDirButton_Click(object sender, RoutedEventArgs e)
@@ -273,6 +311,7 @@ namespace MovieEncoder
                     NavigationService.Navigate(mainWindow.ProgressPage);
                     NotifyPropertyChanged("IsServiceStopped");
                     NotifyPropertyChanged("IsEnabledSaveAll");
+                    NotifyPropertyChanged("IsBackupAllEnabled");
                 }
             }
             else
@@ -281,6 +320,7 @@ namespace MovieEncoder
                 this.NavigationService.RemoveBackEntry();
                 NotifyPropertyChanged("IsServiceStopped");
                 NotifyPropertyChanged("IsEnabledSaveAll");
+                NotifyPropertyChanged("IsBackupAllEnabled");
             }
             NotifyPropertyChanged("StartEncodingButtonText");
         }
@@ -311,7 +351,8 @@ namespace MovieEncoder
                 errorMessage = "'HandBrake profile file ' '" + HandBrakeProfileFile + "' is not valid";
             }
 
-            if (errorMessage != null) {
+            if (errorMessage != null)
+            {
                 MessageBox.Show(errorMessage, "Preferences Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }

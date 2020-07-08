@@ -47,14 +47,6 @@ namespace MovieEncoder
         private ProgressReporter progressReporter;
 
         /* -- Properties -- */
-        public BackupMode BackupMode { get => (BackupMode)Enum.Parse(typeof(BackupMode), Properties.Settings.Default.GlobalBackupMethod);
-            set
-            {
-                Properties.Settings.Default.GlobalBackupMethod = value.ToString();
-                Properties.Settings.Default.Save();
-            }
-        }
-
         public BackupMode GlobalBackupMethod
         {
             get { return (BackupMode)Enum.Parse(typeof(BackupMode), Properties.Settings.Default.GlobalBackupMethod); }
@@ -109,12 +101,23 @@ namespace MovieEncoder
             set { Properties.Settings.Default.HandBrakeOutDir = value; Properties.Settings.Default.Save(); }
         }
 
+        public HandBrakeService.OutputType HandBrakeOutputType
+        {
+            get { return (HandBrakeService.OutputType)Enum.Parse(typeof(HandBrakeService.OutputType), Properties.Settings.Default.HandBrakeOutputType); }
+            set { Properties.Settings.Default.HandBrakeOutputType = value.ToString(); Properties.Settings.Default.Save(); }
+        }
+
+        public bool HandBrakeForceSubtitles
+        {
+            get { return Properties.Settings.Default.HandBrakeForceSubtitles; }
+            set { Properties.Settings.Default.HandBrakeForceSubtitles = value; Properties.Settings.Default.Save(); }
+        }
 
         /* -- Methods -- */
         public EncoderService()
         {
-            makeMKVService = new MakeMKVService(Properties.Settings.Default.MakeMkvConExePath, Properties.Settings.Default.MakeMkvOutDir, Properties.Settings.Default.GlobalBackupAll);
-            handBrakeService = new HandBrakeService(Properties.Settings.Default.HandBrakeCliExePath, Properties.Settings.Default.HandBrakeProfileFile, Properties.Settings.Default.HandBrakeSourceDir, Properties.Settings.Default.HandBrakeOutDir);
+            makeMKVService = new MakeMKVService(MakeMkvConExePath, MakeMkvOutDir, GlobalBackupAll);
+            handBrakeService = new HandBrakeService(HandBrakeCliExePath, HandBrakeProfileFile, HandBrakeSourceDir, HandBrakeOutDir, HandBrakeOutputType, HandBrakeForceSubtitles);
         }
 
         // TODO
@@ -138,13 +141,13 @@ namespace MovieEncoder
                     {
                         // Run MakeMKV to backup movie
                         Job job = null;
-                        if (BackupMode == BackupMode.MakeMKV)
+                        if (GlobalBackupMethod == BackupMode.MakeMKV)
                         {
-                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, (string)driveInfo.Name, Properties.Settings.Default.MakeMkvKeepFiles);
+                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, (string)driveInfo.Name, MakeMkvKeepFiles);
                         }
-                        else if (BackupMode == BackupMode.HandBrake)
+                        else if (GlobalBackupMethod == BackupMode.HandBrake)
                         {
-                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)driveInfo.Name.Replace("\\", ""));
+                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)driveInfo.Name.Replace("\\", ""), GlobalBackupAll);
                         }
 
                         if (job != null)
@@ -163,11 +166,11 @@ namespace MovieEncoder
             SetupDriveMonitoring();
 
             // Read in existing files for encode
-            AddEncodingJobs(Properties.Settings.Default.HandBrakeSourceDir);
+            AddEncodingJobs(HandBrakeSourceDir);
             
 
             // Start file monitoring
-            SetupFileMonitoring(Properties.Settings.Default.HandBrakeSourceDir);
+            SetupFileMonitoring(HandBrakeSourceDir);
 
             progressReporter.Shutdown = false;
 
@@ -183,7 +186,7 @@ namespace MovieEncoder
             {
                 if (Utils.IsMovieFile(file))
                 {
-                    EncodeMovieJob encodeMovieJob = new EncodeMovieJob(handBrakeService, file, 0, Properties.Settings.Default.MakeMkvKeepFiles);
+                    EncodeMovieJob encodeMovieJob = new EncodeMovieJob(handBrakeService, file, 0, MakeMkvKeepFiles);
                     jobQueue.AddJob(encodeMovieJob);
                 }
             }
@@ -305,7 +308,7 @@ namespace MovieEncoder
                     // Check if we have a job for this file
                     if (!FindEncodeJobForPath(path))
                     {
-                        EncodeMovieJob job = new EncodeMovieJob(handBrakeService, path, 0, Properties.Settings.Default.MakeMkvKeepFiles);
+                        EncodeMovieJob job = new EncodeMovieJob(handBrakeService, path, 0, MakeMkvKeepFiles);
                         jobQueue.AddJob(job);
                     }
                     Console.WriteLine(path);
@@ -347,13 +350,13 @@ namespace MovieEncoder
                         Debug.WriteLine("CD has been inserted: " + mbo.Properties["VolumeName"].Value);
                         // Run MakeMKV to backup movie
                         Job job = null;
-                        if (BackupMode == BackupMode.MakeMKV)
+                        if (GlobalBackupMethod == BackupMode.MakeMKV)
                         {
-                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, (string)mbo.Properties["DeviceID"].Value, Properties.Settings.Default.MakeMkvKeepFiles);
+                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, (string)mbo.Properties["DeviceID"].Value, MakeMkvKeepFiles);
                         }
-                        else
+                        else if (GlobalBackupMethod == BackupMode.HandBrake)
                         {
-                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)mbo.Properties["DeviceID"].Value.ToString().Replace("\\", ""));
+                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)mbo.Properties["DeviceID"].Value.ToString().Replace("\\", ""), GlobalBackupAll);
                         }
                         if (job != null)
                         {

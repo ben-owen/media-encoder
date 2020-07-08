@@ -155,7 +155,7 @@ namespace MovieEncoder
 
         public static bool IsMovieFile(string path)
         {
-            if (path != null && path.EndsWith(".mkv"))
+            if (path != null && path.EndsWith(".mkv") || path.EndsWith(".mp4"))
             {
                 return true;
             }

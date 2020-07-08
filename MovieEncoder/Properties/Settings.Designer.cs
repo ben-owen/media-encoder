@@ -130,5 +130,29 @@ namespace MovieEncoder.Properties {
                 this["GlobalBackupMethod"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("MKV")]
+        public string HandBrakeOutputType {
+            get {
+                return ((string)(this["HandBrakeOutputType"]));
+            }
+            set {
+                this["HandBrakeOutputType"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool HandBrakeForceSubtitles {
+            get {
+                return ((bool)(this["HandBrakeForceSubtitles"]));
+            }
+            set {
+                this["HandBrakeForceSubtitles"] = value;
+            }
+        }
     }
 }

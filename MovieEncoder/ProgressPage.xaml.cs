@@ -70,19 +70,24 @@ namespace MovieEncoder
                         Job job = ((ProgressReporter)sender).CurrentJob;
                         if (job != null && _currentJob != job)
                         {
-                            for (int i = 0; i < JobListBox.Items.Count; i++)
+                            ListBoxItem item = (ListBoxItem)JobListBox.ItemContainerGenerator.ContainerFromItem(job);
+                            if (item == null)
                             {
-                                ListBoxItem item = (ListBoxItem)JobListBox.ItemContainerGenerator.ContainerFromIndex(i);
-                                if (item != null && item.Content == job)
-                                {
-                                    item.BringIntoView();
-                                    break;
-                                }
+                                JobListBox.UpdateLayout();
+                                item = (ListBoxItem)JobListBox.ItemContainerGenerator.ContainerFromItem(job);
+                            }
+                            if (item != null && item.Content == job)
+                            {
+                                item.BringIntoView();
                             }
                         }
                         _currentJob = job;
                     }));
                 }
+            }
+            else if (e.PropertyName == "Shutdown")
+            {
+                OnPropertyChanged("RunButtonString");
             }
         }
 
