@@ -17,18 +17,10 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 
 namespace MovieEncoder
@@ -60,7 +52,7 @@ namespace MovieEncoder
                 return Enum.GetValues(typeof(HandBrakeService.OutputType)).Cast<HandBrakeService.OutputType>();
             }
         }
-        
+
         public BackupMode GlobalBackupMethod
         {
             get { return _encoderService.GlobalBackupMethod; }
@@ -334,12 +326,12 @@ namespace MovieEncoder
         private bool ValidateSettings()
         {
             string errorMessage = null;
-            if (!File.Exists(MakeMkvConExePath))
+            if (GlobalBackupMethod == BackupMode.MakeMKV && !File.Exists(MakeMkvConExePath))
             {
                 errorMessage = "'MakeMKVCon.exe' file '" + MakeMkvConExePath + "' is not valid";
             }
 
-            if (errorMessage == null && MakeMkvKeepFiles == true)
+            if (errorMessage == null && GlobalBackupMethod == BackupMode.MakeMKV && MakeMkvKeepFiles == true)
             {
                 if (MakeMkvOutDir.Equals(HandBrakeSourceDir))
                 {

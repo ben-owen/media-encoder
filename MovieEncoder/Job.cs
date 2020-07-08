@@ -18,8 +18,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Data;
 
 namespace MovieEncoder
@@ -37,7 +35,7 @@ namespace MovieEncoder
         abstract public string JobName { get; }
 
         public double MaxProgress
-        { get { return _maxProgress; }  set { _maxProgress = value; OnPropertyChanged(); } }
+        { get { return _maxProgress; } set { _maxProgress = value; OnPropertyChanged(); } }
 
         public double CurrentProgress
         { get { return _currentProgress; } set { _currentProgress = value; OnPropertyChanged(); } }
@@ -49,8 +47,8 @@ namespace MovieEncoder
         { get { return _isErrored; } set { _isErrored = value; OnPropertyChanged(); OnPropertyChanged("ProgressColor"); } }
 
         public string ProgressColor
-        { 
-            get 
+        {
+            get
             { return IsErrored ? "#FFF75252" : "#FF39B200"; }
         }
 

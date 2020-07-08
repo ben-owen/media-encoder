@@ -160,7 +160,7 @@ namespace MovieEncoder
                         double progress = this.Working.Progress;
                         if (Working.PassCount > 0)
                         {
-                            progress = ((Working.Pass - 1) / (double)Working.PassCount) + (Working.Progress / (double)Working.PassCount);
+                            progress = ((Working.Pass - 1) / (double)Working.PassCount) + (Working.Progress / Working.PassCount);
                         }
                         return progress;
                     case "SCANNING":
@@ -209,13 +209,13 @@ namespace MovieEncoder
         private Process handBrakeProcess = null;
         private bool wasKilled = false;
 
-        public readonly string HandBrakeCliExePath;
-        public readonly string HandBrakeProfileFile;
+        public string HandBrakeCliExePath;
+        public string HandBrakeProfileFile;
 
-        public readonly string HandBrakeSourceDir;
-        public readonly string HandBrakeOutDir;
-        public readonly OutputType MovieOutputType;
-        public readonly bool ForceSubtitles;
+        public string HandBrakeSourceDir;
+        public string HandBrakeOutDir;
+        public OutputType MovieOutputType;
+        public bool ForceSubtitles;
 
         public HandBrakeService(string handBrakeCliExePath, string handBrakeProfileFile, string handBrakeSourceDir, string handBrakeOutDir, OutputType outputType, bool forceSubtitles)
         {
@@ -238,7 +238,7 @@ namespace MovieEncoder
             if (!allTitles)
             {
                 cmdParams += " --main-feature";
-            } 
+            }
             else
             {
                 cmdParams += $" --title {titleIndex}";
@@ -246,15 +246,15 @@ namespace MovieEncoder
             handBrakeProcess = new Process
             {
                 StartInfo = new ProcessStartInfo(HandBrakeCliExePath, cmdParams)
+                {
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false
+                },
+                EnableRaisingEvents = true
             };
-            handBrakeProcess.StartInfo.CreateNoWindow = true;
-            handBrakeProcess.StartInfo.RedirectStandardOutput = true;
-            handBrakeProcess.StartInfo.RedirectStandardError = true;
-            handBrakeProcess.StartInfo.UseShellExecute = false;
 
-            handBrakeProcess.EnableRaisingEvents = true;
-            StringBuilder output = new StringBuilder();
-            StringBuilder error = new StringBuilder();
 
             bool success = false;
             StringBuilder json = null;
@@ -276,6 +276,7 @@ namespace MovieEncoder
                 }
             );
 
+            StringBuilder error = new StringBuilder();
             handBrakeProcess.ErrorDataReceived += new DataReceivedEventHandler(
                 delegate (object sender, DataReceivedEventArgs e)
                 {
@@ -349,14 +350,16 @@ namespace MovieEncoder
             handBrakeProcess = new Process
             {
                 StartInfo = new ProcessStartInfo(HandBrakeCliExePath, cmdParams)
+                {
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardInput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false
+                },
+                EnableRaisingEvents = true
             };
-            handBrakeProcess.StartInfo.CreateNoWindow = true;
-            handBrakeProcess.StartInfo.RedirectStandardOutput = true;
-            handBrakeProcess.StartInfo.RedirectStandardInput = true;
-            handBrakeProcess.StartInfo.RedirectStandardError = true;
-            handBrakeProcess.StartInfo.UseShellExecute = false;
 
-            handBrakeProcess.EnableRaisingEvents = true;
             StringBuilder error = new StringBuilder();
 
             List<DiskTitle> diskTitles = new List<DiskTitle>();
@@ -485,7 +488,8 @@ namespace MovieEncoder
                         }
                         // TODO Remove
                         Debug.WriteLine(json.ToString());
-                    } else
+                    }
+                    else
                     {
                         // TODO Remove
                         Debug.WriteLine(json.ToString());

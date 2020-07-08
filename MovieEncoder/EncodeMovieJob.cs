@@ -12,40 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MovieEncoder
 {
     class EncodeMovieJob : Job
     {
         internal readonly string InputFileName;
-        internal string OutputDir 
-        { 
-            get { return handBrakeService.HandBrakeOutDir; } 
+        internal string OutputDir
+        {
+            get { return handBrakeService.HandBrakeOutDir; }
         }
         private readonly HandBrakeService handBrakeService;
         private readonly bool keepFiles;
         private readonly int titleIndex;
+        private readonly int movieIndex;
         private readonly string movieTitle;
 
-        public EncodeMovieJob(HandBrakeService handBrakeService, string inputFilePath, int titleIndex, bool keepFiles)
+        public EncodeMovieJob(HandBrakeService handBrakeService, string inputFilePath, bool keepFiles)
         {
             this.handBrakeService = handBrakeService;
             this.InputFileName = inputFilePath;
             this.keepFiles = keepFiles;
-            this.titleIndex = titleIndex;
+            this.titleIndex = 0;
         }
 
-        public EncodeMovieJob(HandBrakeService handBrakeService, string inputFilePath, string movieTitle, int titleIndex, bool keepFiles)
+        public EncodeMovieJob(HandBrakeService handBrakeService, string inputFilePath, string movieTitle, int titleIndex, int movieIndex, bool keepFiles)
         {
             this.handBrakeService = handBrakeService;
             this.InputFileName = inputFilePath;
             this.movieTitle = movieTitle;
             this.titleIndex = titleIndex;
+            this.movieIndex = movieIndex;
             this.keepFiles = keepFiles;
         }
 
@@ -56,7 +54,8 @@ namespace MovieEncoder
             if (movieTitle != null)
             {
                 return $"{InputFileName} {movieTitle}";
-            } else
+            }
+            else
             {
                 return Path.GetFileName(InputFileName);
             }
@@ -64,6 +63,11 @@ namespace MovieEncoder
 
         public override bool RunJob(JobQueue jobRunner)
         {
+            if (!File.Exists(InputFileName) && !Directory.Exists(InputFileName))
+            {
+                throw new JobException($"Could not find input file '{InputFileName}'");
+            }
+
             // wait for any copy operation to finish
             if (Utils.IsFileLocked(new FileInfo(InputFileName)))
             {
@@ -74,31 +78,32 @@ namespace MovieEncoder
                 }
             }
 
-            if (!File.Exists(InputFileName) && !Directory.Exists(InputFileName))
-            {
-                throw new JobException($"Could not find input file '{InputFileName}'");
-            }
-
             progressReporter.CurrentTask = "Getting titles from file using Handbrake";
+
             // if input is a directory, then assume its a drive
             string outputFile;
             if (Directory.Exists(InputFileName) && movieTitle != null)
             {
                 // generate the output file based on the scan output
+                // get movie name
                 outputFile = Path.Combine(OutputDir, movieTitle);
-            } else
+                Directory.CreateDirectory(outputFile);
+                outputFile = Path.Combine(outputFile, movieTitle + String.Format("_t{0:00}", movieIndex));
+            }
+            else
             {
-                // skip if the output file already exists
                 outputFile = Path.Combine(OutputDir, Path.GetFileName(InputFileName));
             }
 
             outputFile = RenameExtension(outputFile);
 
-            if (File.Exists(outputFile)) {
+            // skip if the output file already exists
+            if (File.Exists(outputFile))
+            {
                 throw new JobException($"Encoding may have already been run. Output file '{outputFile}' already exists.");
             }
 
-            progressReporter.CurrentTask = "Start encoding using Handbrake";
+            progressReporter.CurrentTask = $"Start encoding from '{InputFileName}' to '{outputFile}' using Handbrake";
             if (handBrakeService.Encode(InputFileName, titleIndex, outputFile, progressReporter))
             {
                 // if the output file exists, remove the input file
@@ -131,12 +136,19 @@ namespace MovieEncoder
                         }
                     }
                     return true;
-                } else
+                }
+                else
                 {
                     throw new Exception($"Missing output file {outputFile}. Not removing original file.");
                 }
             }
             return false;
+        }
+
+        private string RemoveExtension(string movieTitle)
+        {
+            int idx = movieTitle.LastIndexOf('.');
+            return movieTitle.Substring(0, idx - 1);
         }
 
         private string RenameExtension(string outputFile)
@@ -146,11 +158,15 @@ namespace MovieEncoder
             {
                 ext = ".mp4";
             }
-            
+
             if (!outputFile.EndsWith(ext))
             {
                 // rename
                 int idx = outputFile.LastIndexOf('.');
+                if (idx == -1)
+                {
+                    idx = outputFile.Length;
+                }
                 outputFile = outputFile.Substring(0, idx) + ext;
             }
             return outputFile;

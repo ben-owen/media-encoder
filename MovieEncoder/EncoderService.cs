@@ -12,18 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.IO;
 using System.Management;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Documents;
-using System.Runtime.ExceptionServices;
-using System.Windows.Media.Animation;
 
 namespace MovieEncoder
 {
@@ -68,55 +61,100 @@ namespace MovieEncoder
         public string MakeMkvConExePath
         {
             get { return Properties.Settings.Default.MakeMkvConExePath; }
-            set { Properties.Settings.Default.MakeMkvConExePath = value; Properties.Settings.Default.Save(); }
+            set
+            {
+                Properties.Settings.Default.MakeMkvConExePath = value;
+                Properties.Settings.Default.Save();
+                makeMKVService.MakeMKVConExePath = value;
+            }
         }
 
         public string MakeMkvOutDir
         {
             get { return Properties.Settings.Default.MakeMkvOutDir; }
-            set { Properties.Settings.Default.MakeMkvOutDir = value; Properties.Settings.Default.Save(); }
+            set
+            {
+                Properties.Settings.Default.MakeMkvOutDir = value;
+                Properties.Settings.Default.Save();
+                makeMKVService.MakeMKVOutPath = value;
+            }
         }
 
         public bool GlobalBackupAll
         {
             get { return Properties.Settings.Default.GlobalBackupAll; }
-            set { Properties.Settings.Default.GlobalBackupAll = value; Properties.Settings.Default.Save(); }
+            set
+            {
+                Properties.Settings.Default.GlobalBackupAll = value;
+                Properties.Settings.Default.Save();
+                makeMKVService.MakeMKVBackupAll = value;
+            }
         }
 
         public string HandBrakeCliExePath
         {
             get { return Properties.Settings.Default.HandBrakeCliExePath; }
-            set { Properties.Settings.Default.HandBrakeCliExePath = value; Properties.Settings.Default.Save(); }
+            set
+            {
+                Properties.Settings.Default.HandBrakeCliExePath = value;
+                Properties.Settings.Default.Save();
+                handBrakeService.HandBrakeCliExePath = value;
+            }
         }
 
         public string HandBrakeProfileFile
         {
             get { return Properties.Settings.Default.HandBrakeProfileFile; }
-            set { Properties.Settings.Default.HandBrakeProfileFile = value; Properties.Settings.Default.Save(); }
+            set
+            {
+                Properties.Settings.Default.HandBrakeProfileFile = value;
+                Properties.Settings.Default.Save();
+                handBrakeService.HandBrakeProfileFile = value;
+            }
         }
 
         public string HandBrakeSourceDir
         {
             get { return Properties.Settings.Default.HandBrakeSourceDir; }
-            set { Properties.Settings.Default.HandBrakeSourceDir = value; Properties.Settings.Default.Save(); }
+            set
+            {
+                Properties.Settings.Default.HandBrakeSourceDir = value;
+                Properties.Settings.Default.Save();
+                handBrakeService.HandBrakeSourceDir = value;
+            }
         }
 
         public string HandBrakeOutDir
         {
             get { return Properties.Settings.Default.HandBrakeOutDir; }
-            set { Properties.Settings.Default.HandBrakeOutDir = value; Properties.Settings.Default.Save(); }
+            set
+            {
+                Properties.Settings.Default.HandBrakeOutDir = value;
+                Properties.Settings.Default.Save();
+                handBrakeService.HandBrakeOutDir = value;
+            }
         }
 
         public HandBrakeService.OutputType HandBrakeOutputType
         {
             get { return (HandBrakeService.OutputType)Enum.Parse(typeof(HandBrakeService.OutputType), Properties.Settings.Default.HandBrakeOutputType); }
-            set { Properties.Settings.Default.HandBrakeOutputType = value.ToString(); Properties.Settings.Default.Save(); }
+            set
+            {
+                Properties.Settings.Default.HandBrakeOutputType = value.ToString();
+                Properties.Settings.Default.Save();
+                handBrakeService.MovieOutputType = value;
+            }
         }
 
         public bool HandBrakeForceSubtitles
         {
             get { return Properties.Settings.Default.HandBrakeForceSubtitles; }
-            set { Properties.Settings.Default.HandBrakeForceSubtitles = value; Properties.Settings.Default.Save(); }
+            set
+            {
+                Properties.Settings.Default.HandBrakeForceSubtitles = value;
+                Properties.Settings.Default.Save();
+                handBrakeService.ForceSubtitles = value;
+            }
         }
 
         /* -- Methods -- */
@@ -149,11 +187,11 @@ namespace MovieEncoder
                         Job job = null;
                         if (GlobalBackupMethod == BackupMode.MakeMKV)
                         {
-                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, (string)driveInfo.Name, MakeMkvKeepFiles, GlobalMinMovieLen);
+                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, driveInfo.Name, MakeMkvKeepFiles, GlobalMinMovieLen);
                         }
                         else if (GlobalBackupMethod == BackupMode.HandBrake)
                         {
-                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)driveInfo.Name.Replace("\\", ""), GlobalBackupAll, GlobalMinMovieLen);
+                            job = new BackupDiskHandBrakeJob(handBrakeService, driveInfo.Name.Replace("\\", ""), GlobalBackupAll, GlobalMinMovieLen);
                         }
 
                         if (job != null)
@@ -162,7 +200,8 @@ namespace MovieEncoder
                             jobQueue.AddJob(job, true);
                         }
                     }
-                } catch (IOException)
+                }
+                catch (IOException)
                 {
                     // skip for device not ready
                 }
@@ -173,7 +212,7 @@ namespace MovieEncoder
 
             // Read in existing files for encode
             AddEncodingJobs(HandBrakeSourceDir);
-            
+
 
             // Start file monitoring
             SetupFileMonitoring(HandBrakeSourceDir);
@@ -194,7 +233,7 @@ namespace MovieEncoder
             {
                 if (Utils.IsMovieFile(file))
                 {
-                    EncodeMovieJob encodeMovieJob = new EncodeMovieJob(handBrakeService, file, 0, MakeMkvKeepFiles);
+                    EncodeMovieJob encodeMovieJob = new EncodeMovieJob(handBrakeService, file, MakeMkvKeepFiles);
                     jobQueue.AddJob(encodeMovieJob);
                 }
             }
@@ -261,10 +300,10 @@ namespace MovieEncoder
                 {
                     Path = path,
                     NotifyFilter = NotifyFilters.LastAccess
-                                     | NotifyFilters.LastWrite
-                                     | NotifyFilters.FileName
-                                     | NotifyFilters.DirectoryName
-                                     | NotifyFilters.CreationTime
+                                        | NotifyFilters.LastWrite
+                                        | NotifyFilters.FileName
+                                        | NotifyFilters.DirectoryName
+                                        | NotifyFilters.CreationTime
                 };
                 watcher.Created += FileSystem_Created;
                 watcher.Renamed += FileSystem_Renamed;
@@ -279,6 +318,10 @@ namespace MovieEncoder
                 {
                     SetupFileMonitoring(file);
                 }
+            }
+            catch (ArgumentException)
+            {
+                // for cases where the path was removed before we setup monitoring
             }
             catch (UnauthorizedAccessException)
             {
@@ -316,7 +359,7 @@ namespace MovieEncoder
                     // Check if we have a job for this file
                     if (!FindEncodeJobForPath(path))
                     {
-                        EncodeMovieJob job = new EncodeMovieJob(handBrakeService, path, 0, MakeMkvKeepFiles);
+                        EncodeMovieJob job = new EncodeMovieJob(handBrakeService, path, MakeMkvKeepFiles);
                         jobQueue.AddJob(job);
                     }
                     Console.WriteLine(path);
@@ -364,7 +407,7 @@ namespace MovieEncoder
                         }
                         else if (GlobalBackupMethod == BackupMode.HandBrake)
                         {
-                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)mbo.Properties["DeviceID"].Value.ToString().Replace("\\", ""), GlobalBackupAll, GlobalMinMovieLen);
+                            job = new BackupDiskHandBrakeJob(handBrakeService, mbo.Properties["DeviceID"].Value.ToString().Replace("\\", ""), GlobalBackupAll, GlobalMinMovieLen);
                         }
                         if (job != null)
                         {
@@ -426,8 +469,8 @@ namespace MovieEncoder
                         job.IsStarted = true;
                         if (job.RunJob(jobQueue))
                         {
-                            progressReporter.CurrentTask = "Completed Job " + job.JobName;
-                        } 
+                            progressReporter.CurrentTask = "Completed Job ";
+                        }
                         else
                         {
                             job.IsErrored = true;
@@ -439,7 +482,7 @@ namespace MovieEncoder
                             progressReporter.CurrentJob.CurrentProgress = progressReporter.CurrentJob.MaxProgress;
                         }
                         progressReporter.Reset();
-                    } 
+                    }
                     catch (Exception e)
                     {
                         job.IsErrored = true;
@@ -447,19 +490,20 @@ namespace MovieEncoder
                         job.CurrentProgress = 1;
 
                         progressReporter.AddError(e.Message);
-                        progressReporter.CurrentTask = "Failed Job " + job.JobName;
+                        progressReporter.CurrentTask = "Failed Job ";
                         progressReporter.Reset();
                     }
                     jobQueue.RemoveJob(job);
-                } 
+                }
                 else
                 {
-                    if (!progressReporter.CurrentTask.Equals("No Tasks")) {
+                    if (!progressReporter.CurrentTask.Equals("No Tasks"))
+                    {
                         progressReporter.AddLogLine();
                         progressReporter.CurrentTask = "No Tasks";
                     }
                 }
-                Thread.Sleep(100);
+                Thread.Sleep(300);
             }
             jobQueue.ClearJobQueue();
             progressReporter.Reset();

@@ -17,10 +17,8 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Windows;
 using System.Windows.Documents;
-using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -103,7 +101,6 @@ namespace MovieEncoder
                 _currentTask = value;
                 AppendLog(value, LogEntryType.Info);
                 OnPropertyChanged();
-                OnPropertyChanged("Log");
             }
         }
 
@@ -147,14 +144,17 @@ namespace MovieEncoder
             _currentTask = "Stopped";
             _isError = false;
             Remaining = "";
-            LogDocument = new FlowDocument();
 
-            CreateLogDocumentTable();
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                LogDocument = new FlowDocument();
+                CreateLogDocumentTable();
+            });
         }
 
         internal void ClearLog()
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() =>
+            _logTable.Dispatcher.Invoke(new Action(() =>
             {
                 // find the current job log
                 List<TableRow> jobRows = new List<TableRow>();
@@ -168,16 +168,16 @@ namespace MovieEncoder
                         }
                     }
                 }
+                _jobLogPosition.Clear();
                 _logTable.RowGroups[0].Rows.Clear();
                 if (jobRows.Count > 0)
                 {
                     foreach (TableRow row in jobRows)
                     {
                         _logTable.RowGroups[0].Rows.Add(row);
+                        _jobLogPosition.Add((Job)((object[])row.Tag)[0], row);
                     }
                 }
-                //_logTable.RowGroups.Add(new TableRowGroup());
-                //CreateLogDocumentTable();
             }));
 
             JobQueue.ClearJobLog();
@@ -256,127 +256,142 @@ namespace MovieEncoder
                     return;
                 }
 
-                DateTime now = DateTime.Now;
+                Action callback = new Action(() =>
+                                        {
+                                            DateTime now = DateTime.Now;
 
+                                            TableRow row = new TableRow
+                                            {
+                                                Tag = new object[] { _currentJob, type }
+                                            };
+
+                                            Paragraph paragraph = new Paragraph
+                                            {
+                                                Margin = new Thickness(0)
+                                            };
+
+                                            Run dtr = new Run(now.ToString("yyyy-MM-dd HH:mm:ss - "));
+                                            row.Cells.Add(new TableCell(new Paragraph(dtr)));
+
+                                            Run msgr = new Run(msg);
+
+                                            row.Cells.Add(new TableCell(new Paragraph(msgr)));
+
+                                            ColorRow(row, true);
+                                            // Add log position
+                                            if (_currentJob != null && !_jobLogPosition.ContainsKey(_currentJob))
+                                            {
+                                                _jobLogPosition.Add(_currentJob, row);
+                                            }
+
+                                            _logTable.RowGroups[0].Rows.Add(row);
+
+                                            // Setup size for columns
+                                            Size dtSize = MeasureLogDocumentString(dtr, dtr.Text);
+                                            if (_logTable.Columns[0].Width.Value < dtSize.Width)
+                                            {
+                                                _logTable.Columns[0].Width = new GridLength(dtSize.Width);
+                                            }
+
+                                            OnPropertyChanged("LogDocument");
+                                        });
                 if (System.Windows.Application.Current != null)
                 {
-                    System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    if (System.Windows.Application.Current.Dispatcher.CheckAccess())
                     {
-                        TableRow row = new TableRow
-                        {
-                            Tag = new object[] { _currentJob, type }
-                        };
-
-                        Paragraph paragraph = new Paragraph
-                        {
-                            Margin = new Thickness(0)
-                        };
-
-                        Run dtr = new Run(now.ToString("yyyy-MM-dd HH:mm:ss - "));
-                        row.Cells.Add(new TableCell(new Paragraph(dtr)));
-
-                        Run msgr = new Run(msg);
-
-                        row.Cells.Add(new TableCell(new Paragraph(msgr)));
-
-                        ColorRow(row, true);
-                        _logTable.RowGroups[0].Rows.Add(row);
-
-                        // Add log position
-                        if (_currentJob != null && !_jobLogPosition.ContainsKey(_currentJob))
-                        {
-                            _jobLogPosition.Add(_currentJob, row);
-                        }
-
-                        // Setup size for columns
-                        Size measure = MeasureLogDocumentString(dtr, dtr.Text);
-                        Size dtSize = MeasureLogDocumentString(dtr, dtr.Text);
-                        if (_logTable.Columns[0].Width.Value < dtSize.Width)
-                        {
-                            _logTable.Columns[0].Width = new GridLength(dtSize.Width);
-                        }
-
-                        OnPropertyChanged("LogDocument");
-                    }));
+                        callback.Invoke();
+                    }
+                    else
+                    {
+                        _logTable.Dispatcher.InvokeAsync(callback);
+                    }
                 }
             }
         }
 
         public void AddLogLine()
         {
+            Action callback = new Action(() =>
+                               {
+                                   TableRow row = new TableRow
+                                   {
+                                       FontSize = 0.004,
+                                       Tag = new object[] { _currentJob, LogEntryType.Trace }
+                                   };
+                                   TableCell cell = new TableCell
+                                   {
+                                       ColumnSpan = 2,
+                                       BorderBrush = Brushes.DarkGray,
+                                       BorderThickness = new Thickness(0.5),
+                                       Padding = new Thickness(0),
+                                   };
+                                   row.Cells.Add(cell);
+
+                                   _logTable.RowGroups[0].Rows.Add(row);
+
+                                   OnPropertyChanged("LogDocument");
+                               });
             if (System.Windows.Application.Current != null)
             {
-                System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                if (System.Windows.Application.Current.Dispatcher.CheckAccess())
                 {
-                    TableRow row = new TableRow
-                    {
-                        FontSize = 0.004,
-                        Tag = new object[] { _currentJob, LogEntryType.Trace }
-                    };
-                    TableCell cell = new TableCell
-                    {
-                        ColumnSpan = 2,
-                        BorderBrush = Brushes.DarkGray,
-                        BorderThickness = new Thickness(0.5),
-                        Padding = new Thickness(0),
-                    };
-                    row.Cells.Add(cell);
-
-                    _logTable.RowGroups[0].Rows.Add(row);
-
-                    OnPropertyChanged("LogDocument");
-                }));
+                    callback.Invoke();
+                }
+                else
+                {
+                    _logTable.Dispatcher.InvokeAsync(callback);
+                }
             }
         }
 
         internal void ReColorLog(bool normal = true)
         {
             // go through each row
-            foreach (TableRow row in _logTable.RowGroups[0].Rows)
+            _logTable.Dispatcher.InvokeAsync(new Action(() =>
             {
-                ColorRow(row, normal);
-            }
+                foreach (TableRow row in _logTable.RowGroups[0].Rows)
+                {
+                    ColorRow(row, normal);
+                }
+                OnPropertyChanged("LogDocument");
+            }));
         }
 
         private void ColorRow(TableRow row, bool normal = true)
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(new Action(() =>
+            if (row.Cells.Count == 2)
             {
-                if (row.Cells.Count == 2)
+                Block dt = row.Cells[0].Blocks.FirstBlock;
+                Block entry = row.Cells[1].Blocks.FirstBlock;
+                LogEntryType type = (LogEntryType)((object[])row.Tag)[1];
+                if (normal == true)
                 {
-                    Block dt = row.Cells[0].Blocks.FirstBlock;
-                    Block entry = row.Cells[1].Blocks.FirstBlock;
-                    Job job = (Job)((object[])row.Tag)[0];
-                    LogEntryType type = (LogEntryType)((object[])row.Tag)[1];
-                    if (normal == true)
-                    {
-                        dt.Foreground = Brushes.Gray;
+                    dt.Foreground = Brushes.Gray;
 
-                        switch (type)
-                        {
-                            case LogEntryType.Error:
-                                entry.Foreground = Brushes.Red;
-                                break;
-                            case LogEntryType.Info:
-                                entry.Foreground = Brushes.Black;
-                                break;
-                            case LogEntryType.Debug:
-                                entry.Foreground = Brushes.Gray;
-                                break;
-                        }
-                    }
-                    else
+                    switch (type)
                     {
-                        dt.Foreground = Brushes.LightGray;
-                        entry.Foreground = Brushes.Gray;
+                        case LogEntryType.Error:
+                            entry.Foreground = Brushes.Red;
+                            break;
+                        case LogEntryType.Info:
+                            entry.Foreground = Brushes.Black;
+                            break;
+                        case LogEntryType.Debug:
+                            entry.Foreground = Brushes.Gray;
+                            break;
                     }
                 }
-            }));
+                else
+                {
+                    dt.Foreground = Brushes.LightGray;
+                    entry.Foreground = Brushes.Gray;
+                }
+            }
         }
 
         private Size MeasureLogDocumentString(TextElement element, string candidate)
         {
-            var formattedText = new FormattedText(
+            FormattedText formattedText = new FormattedText(
                 candidate,
                 CultureInfo.CurrentCulture,
                 System.Windows.FlowDirection.LeftToRight,

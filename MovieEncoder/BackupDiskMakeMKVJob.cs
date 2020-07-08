@@ -11,12 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MovieEncoder
 {
@@ -71,7 +67,7 @@ namespace MovieEncoder
 
             return false;
         }
-        
+
         private DiskTitle PickWinner(List<DiskTitle> diskTitles)
         {
             if (diskTitles.Count == 0)
@@ -100,7 +96,7 @@ namespace MovieEncoder
             }
             else
             {
-                if (y == null) 
+                if (y == null)
                 {
                     return 1;
                 }

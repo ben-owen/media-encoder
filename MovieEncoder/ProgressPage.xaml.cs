@@ -17,6 +17,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Media;
 
 namespace MovieEncoder
 {
@@ -26,11 +27,13 @@ namespace MovieEncoder
     public partial class ProgressPage : Page, INotifyPropertyChanged
     {
         private Job _currentJob;
-
+        private ScrollViewer _logRichTextBoxScroll;
         private readonly ProgressReporter ProgressReporter;
         private readonly System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        private bool _isLogScrollAtEnd = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
+
 
         public string StatusColor
         {
@@ -64,30 +67,31 @@ namespace MovieEncoder
             else if (e.PropertyName == "CurrentJob")
             {
                 // scroll to that job in the task list
-                if (Application.Current != null)
+                Action callback = new Action(() =>
+                                    {
+                                        Job job = ((ProgressReporter)sender).CurrentJob;
+                                        if (job != null && _currentJob != job)
+                                        {
+                                            ListBoxItem item = (ListBoxItem)JobListBox.ItemContainerGenerator.ContainerFromItem(job);
+                                            if (item == null)
+                                            {
+                                                JobListBox.UpdateLayout();
+                                                item = (ListBoxItem)JobListBox.ItemContainerGenerator.ContainerFromItem(job);
+                                            }
+                                            if (item != null && item.Content == job)
+                                            {
+                                                item.BringIntoView();
+                                            }
+                                        }
+                                        _currentJob = job;
+                                    });
+                if (Dispatcher.CheckAccess())
                 {
-                    System.Windows.Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        Job job = ((ProgressReporter)sender).CurrentJob;
-                        if (job != null && _currentJob != job)
-                        {
-                            ListBoxItem item = (ListBoxItem)JobListBox.ItemContainerGenerator.ContainerFromItem(job);
-                            if (item == null)
-                            {
-                                JobListBox.UpdateLayout();
-                                item = (ListBoxItem)JobListBox.ItemContainerGenerator.ContainerFromItem(job);
-                            }
-                            if (item != null && item.Content == job)
-                            {
-                                item.BringIntoView();
-                            } 
-                            else
-                            {
-                                System.Diagnostics.Debug.Fail("No Scrolling");
-                            }
-                        }
-                        _currentJob = job;
-                    }));
+                    callback.Invoke();
+                }
+                else
+                {
+                    Dispatcher.InvokeAsync(callback);
                 }
             }
             else if (e.PropertyName == "Shutdown")
@@ -96,9 +100,13 @@ namespace MovieEncoder
             }
             else if (e.PropertyName == "LogDocument")
             {
-                Dispatcher.Invoke(new Action(() => {
-                    LogRichTextBox.ScrollToEnd();
-                }));
+                if (_logRichTextBoxScroll != null)
+                {
+                    if (_isLogScrollAtEnd)
+                    {
+                        _logRichTextBoxScroll.ScrollToEnd();
+                    }
+                }
             }
         }
 
@@ -107,7 +115,8 @@ namespace MovieEncoder
             if (!((App)Application.Current).EncoderService.IsStarted())
             {
                 ((App)Application.Current).EncoderService.Start();
-            } else
+            }
+            else
             {
                 ((App)Application.Current).EncoderService.Stop();
             }
@@ -115,7 +124,7 @@ namespace MovieEncoder
             OnPropertyChanged("RunButtonString");
         }
 
-  
+
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -143,6 +152,18 @@ namespace MovieEncoder
                     }
                 }
             }
+        }
+
+        private void LogRichTextBox_Loaded(object sender, RoutedEventArgs e)
+        {
+            _logRichTextBoxScroll = (ScrollViewer)((Border)VisualTreeHelper.GetChild(LogRichTextBox, 0)).Child;
+            _logRichTextBoxScroll.ScrollChanged += LogRichTextBoxScroll_ScrollChanged;
+        }
+
+        private void LogRichTextBoxScroll_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            ScrollViewer scroll = (ScrollViewer)sender;
+            _isLogScrollAtEnd = scroll.VerticalOffset == scroll.ScrollableHeight;
         }
     }
 }

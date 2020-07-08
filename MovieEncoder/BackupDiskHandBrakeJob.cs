@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace MovieEncoder
 {
@@ -28,9 +24,9 @@ namespace MovieEncoder
             List<DiskTitle> diskTitles = handBrakeService.Scan(driveName, 0, true, progressReporter);
             if (diskTitles.Count > 0)
             {
-                int n = 0;
                 // order them
-                diskTitles.Sort((o1, o2) => {
+                diskTitles.Sort((o1, o2) =>
+                {
                     if (o1.Seconds > o2.Seconds)
                     {
                         return -1;
@@ -57,19 +53,22 @@ namespace MovieEncoder
                     {
                         diskTitles.Insert(0, mainTitle);
                     }
-                } else if (!backupAll) {
+                }
+                else if (!backupAll)
+                {
                     // pick the 1st 
                     mainTitle = diskTitles[0];
                     diskTitles.Clear();
                     diskTitles.Add(mainTitle);
                 }
 
+                int n = 0;
                 foreach (DiskTitle title in diskTitles)
                 {
                     if (title.Seconds >= minMovieLen)
                     {
-                        string cleanTitle = GetMovieTitle(title) + String.Format("_t{0:00}.{1}", n++, handBrakeService.MovieOutputType == HandBrakeService.OutputType.MP4 ? "mp4" : "mkv");
-                        jobRunner.AddJob(new EncodeMovieJob(handBrakeService, driveName, cleanTitle, title.TitleIndex, false));
+                        string cleanTitle = GetMovieTitle(title);
+                        jobRunner.AddJob(new EncodeMovieJob(handBrakeService, driveName, cleanTitle, title.TitleIndex, n++, false));
                     }
                 }
                 return true;
@@ -91,7 +90,8 @@ namespace MovieEncoder
                     if (ch == ':' || ch == '\\')
                     {
                         newTitle[n++] = '-';
-                    } else
+                    }
+                    else
                     {
                         newTitle[n++] = ch;
                     }

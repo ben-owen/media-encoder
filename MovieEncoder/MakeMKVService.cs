@@ -22,10 +22,10 @@ namespace MovieEncoder
 {
     class MakeMKVService
     {
-        public readonly string MakeMKVConExePath;
-        public readonly string MakeMKVOutPath;
+        public string MakeMKVConExePath;
+        public string MakeMKVOutPath;
 
-        public readonly bool MakeMKVBackupAll;
+        public bool MakeMKVBackupAll;
         private Process makeMKVProcess;
 
         public MakeMKVService(string makeMKVConExePath, string makeMKVOutPath, bool backupAll)
@@ -389,7 +389,8 @@ namespace MovieEncoder
                     {
                         makeMKVProcess.Kill();
                     }
-                } catch(System.InvalidOperationException)
+                }
+                catch (System.InvalidOperationException)
                 {
                     // ignore
                 }

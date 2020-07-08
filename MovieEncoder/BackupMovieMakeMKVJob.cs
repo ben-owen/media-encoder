@@ -11,12 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MovieEncoder
 {
@@ -48,11 +42,11 @@ namespace MovieEncoder
             if (keepMovies)
             {
                 // This means the source of the next job is the output of the current job. These files will not be deleted after encoding.
-                jobQueue.AddJob(new EncodeMovieJob(handBrakeService, diskTitle.FullMKVPath, diskTitle.TitleIndex, true));
+                jobQueue.AddJob(new EncodeMovieJob(handBrakeService, diskTitle.FullMKVPath, true));
             }
             return true;
         }
-        
+
         private static int ComparDiskTitleByDuration(DiskTitle x, DiskTitle y)
         {
             if (x == null)
@@ -68,7 +62,7 @@ namespace MovieEncoder
             }
             else
             {
-                if (y == null) 
+                if (y == null)
                 {
                     return 1;
                 }

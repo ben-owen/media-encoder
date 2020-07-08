@@ -12,17 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.Permissions;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Threading;
 
 namespace MovieEncoder
 {
@@ -104,7 +95,7 @@ namespace MovieEncoder
                     while ((currentBlockSize = source.Read(buffer, 0, buffer.Length)) > 0)
                     {
                         totalBytes += currentBlockSize;
-                        double percentage = (double)totalBytes * 100.0 / fileLength;
+                        double percentage = totalBytes * 100.0 / fileLength;
 
                         dest.Write(buffer, 0, currentBlockSize);
 

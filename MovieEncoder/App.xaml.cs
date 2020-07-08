@@ -12,15 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Diagnostics;
-using System.Dynamic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace MovieEncoder
@@ -31,24 +25,25 @@ namespace MovieEncoder
     public partial class App : Application
     {
         internal readonly EncoderService EncoderService = new EncoderService();
-        internal readonly ProgressReporter ProgressReporter = new ProgressReporter();
+        internal ProgressReporter ProgressReporter;
 
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool SetForegroundWindow(IntPtr windowHandle);
 
         public App()
         {
-            this.EncoderService.SetProgressReporter(this.ProgressReporter);
         }
 
 
         private void Application_Exit(object sender, ExitEventArgs e)
         {
-            EncoderService.Stop();        
+            EncoderService.Stop();
         }
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            ProgressReporter = new ProgressReporter();
+            EncoderService.SetProgressReporter(this.ProgressReporter);
             new Mutex(true, "MovieEncoderApplication", out bool aIsNewInstance);
             if (!aIsNewInstance)
             {

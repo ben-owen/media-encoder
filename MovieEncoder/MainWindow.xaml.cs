@@ -11,9 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-using System;
-using System.Runtime.InteropServices;
-using System.Windows.Controls;
 using System.Windows.Navigation;
 
 namespace MovieEncoder
@@ -49,8 +46,10 @@ namespace MovieEncoder
 
         private void AboutMenu_Click(object sender, System.Windows.RoutedEventArgs e)
         {
-            AboutWindow aboutWindow = new AboutWindow();
-            aboutWindow.Owner = this;
+            AboutWindow aboutWindow = new AboutWindow
+            {
+                Owner = this
+            };
             aboutWindow.ShowDialog();
         }
 
