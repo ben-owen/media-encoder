@@ -15,10 +15,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace MovieEncoder
 {
@@ -41,8 +39,10 @@ namespace MovieEncoder
         {
             StopRunningProcess();
 
-            makeMKVProcess = new Process();
-            makeMKVProcess.StartInfo = new ProcessStartInfo(MakeMKVConExePath, "-r --cache=1 --progress=-stdout info dev:" + drive);
+            makeMKVProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo(MakeMKVConExePath, "-r --cache=1 --progress=-stdout info dev:" + drive)
+            };
             makeMKVProcess.StartInfo.CreateNoWindow = true;
             makeMKVProcess.StartInfo.RedirectStandardOutput = true;
             makeMKVProcess.StartInfo.RedirectStandardInput = true;
@@ -230,8 +230,10 @@ namespace MovieEncoder
 
             string cmd = "-r --decrypt --noscan --progress=-stdout --progress=-stdout --cache=1024 mkv dev:" + diskTitle.Drive + " " + diskTitle.TitleIndex + " \"" + outDir + "\"";
 
-            makeMKVProcess = new Process();
-            makeMKVProcess.StartInfo = new ProcessStartInfo(MakeMKVConExePath, cmd);
+            makeMKVProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo(MakeMKVConExePath, cmd)
+            };
             makeMKVProcess.StartInfo.CreateNoWindow = true;
             makeMKVProcess.StartInfo.RedirectStandardOutput = true;
             makeMKVProcess.StartInfo.RedirectStandardInput = true;
@@ -324,16 +326,20 @@ namespace MovieEncoder
             }
         }
 
-        private int GetDiscIndex(string drive)
+        public int GetDiscIndex(string drive)
         {
-            makeMKVProcess = new Process();
-            makeMKVProcess.StartInfo = new ProcessStartInfo(MakeMKVConExePath, "-r --cache=1 info disk:9999");
-            makeMKVProcess.StartInfo.CreateNoWindow = true;
-            makeMKVProcess.StartInfo.RedirectStandardOutput = true;
-            makeMKVProcess.StartInfo.RedirectStandardInput = true;
-            makeMKVProcess.StartInfo.UseShellExecute = false;
+            makeMKVProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo(MakeMKVConExePath, "-r --cache=1 info disk:9999")
+                {
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardInput = true,
+                    UseShellExecute = false
+                },
 
-            makeMKVProcess.EnableRaisingEvents = true;
+                EnableRaisingEvents = true
+            };
             StringBuilder output = new StringBuilder();
 
             int driveIndex = -1;

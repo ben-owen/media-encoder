@@ -37,7 +37,6 @@ namespace MovieEncoder
     public class ProgressReporter : INotifyPropertyChanged
     {
         private string _currentTask;
-        private readonly StringBuilder _log = new StringBuilder();
         private bool _isError = false;
         private string _remaining = "Test";
         private Job _currentJob;
@@ -130,11 +129,6 @@ namespace MovieEncoder
             get { return _isError ? Visibility.Hidden : Visibility.Visible; }
         }
 
-        public string Log
-        {
-            get { return this._log.ToString(); }
-        }
-
         public FlowDocument LogDocument { get; internal set; }
 
         public string Remaining
@@ -203,13 +197,17 @@ namespace MovieEncoder
             _logTable = new Table();
             _logTable.RowGroups.Add(new TableRowGroup());
 
-            TableColumn col1 = new TableColumn();
-            col1.Width = new GridLength(120, GridUnitType.Pixel);
-            col1.Background = Brushes.AliceBlue;
+            TableColumn col1 = new TableColumn
+            {
+                Width = new GridLength(120, GridUnitType.Pixel),
+                Background = Brushes.AliceBlue
+            };
             _logTable.Columns.Add(col1);
 
-            TableColumn col2 = new TableColumn();
-            col2.Width = new GridLength(100, GridUnitType.Star);
+            TableColumn col2 = new TableColumn
+            {
+                Width = new GridLength(100, GridUnitType.Star)
+            };
             _logTable.Columns.Add(col2);
 
             LogDocument.Blocks.Add(_logTable);
@@ -269,8 +267,10 @@ namespace MovieEncoder
                             Tag = new object[] { _currentJob, type }
                         };
 
-                        Paragraph paragraph = new Paragraph();
-                        paragraph.Margin = new Thickness(0);
+                        Paragraph paragraph = new Paragraph
+                        {
+                            Margin = new Thickness(0)
+                        };
 
                         Run dtr = new Run(now.ToString("yyyy-MM-dd HH:mm:ss - "));
                         row.Cells.Add(new TableCell(new Paragraph(dtr)));

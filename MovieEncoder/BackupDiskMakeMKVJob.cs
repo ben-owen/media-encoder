@@ -26,15 +26,17 @@ namespace MovieEncoder
         private readonly HandBrakeService handBrakeService;
         private readonly string driveName;
         private readonly bool keepMovies;
+        private readonly int minMovieLen;
 
         public override string JobName => "Backing Up Disk " + driveName;
 
-        public BackupDiskMakeMKVJob(MakeMKVService makeMKVService, HandBrakeService handBrakeService, string driveName, bool keepMovies = false)
+        public BackupDiskMakeMKVJob(MakeMKVService makeMKVService, HandBrakeService handBrakeService, string driveName, bool keepMovies, int minMovieLen)
         {
             this.makeMKVService = makeMKVService;
             this.handBrakeService = handBrakeService;
             this.driveName = driveName;
             this.keepMovies = keepMovies;
+            this.minMovieLen = minMovieLen;
         }
 
         public override bool RunJob(JobQueue jobQueue)
@@ -57,8 +59,11 @@ namespace MovieEncoder
                 }
                 foreach (DiskTitle diskTitle in diskTitles)
                 {
-                    // Backup Movie Job
-                    jobQueue.AddJob(new BackupMovieMakeMKVJob(makeMKVService, handBrakeService, diskTitle, keepMovies), true);
+                    if (diskTitle.Seconds >= minMovieLen)
+                    {
+                        // Backup Movie Job
+                        jobQueue.AddJob(new BackupMovieMakeMKVJob(makeMKVService, handBrakeService, diskTitle, keepMovies), true);
+                    }
                 }
 
                 return true;

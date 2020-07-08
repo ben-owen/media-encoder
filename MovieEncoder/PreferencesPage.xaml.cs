@@ -86,6 +86,12 @@ namespace MovieEncoder
             }
         }
 
+        public int GlobalMinMovieLen
+        {
+            get { return _encoderService.GlobalMinMovieLen; }
+            set { _encoderService.GlobalMinMovieLen = value; NotifyPropertyChanged(); }
+        }
+
         public string MakeMkvConExePath
         {
             get { return _encoderService.MakeMkvConExePath; }

@@ -11,14 +11,16 @@ namespace MovieEncoder
         private readonly HandBrakeService handBrakeService;
         private readonly string driveName;
         private readonly bool backupAll;
+        private readonly int minMovieLen;
 
         public override string JobName => "Scan Disk " + driveName;
 
-        public BackupDiskHandBrakeJob(HandBrakeService handBrakeService, string driveName, bool backupAll)
+        public BackupDiskHandBrakeJob(HandBrakeService handBrakeService, string driveName, bool backupAll, int minMovieLen)
         {
             this.handBrakeService = handBrakeService;
             this.driveName = driveName;
             this.backupAll = backupAll;
+            this.minMovieLen = minMovieLen;
         }
 
         public override bool RunJob(JobQueue jobRunner)
@@ -64,8 +66,11 @@ namespace MovieEncoder
 
                 foreach (DiskTitle title in diskTitles)
                 {
-                    string cleanTitle = GetMovieTitle(title) + String.Format("_t{0:00}.{1}", n++, handBrakeService.MovieOutputType == HandBrakeService.OutputType.MP4 ? "mp4" : "mkv");
-                    jobRunner.AddJob(new EncodeMovieJob(handBrakeService, driveName, cleanTitle, title.TitleIndex, false));
+                    if (title.Seconds >= minMovieLen)
+                    {
+                        string cleanTitle = GetMovieTitle(title) + String.Format("_t{0:00}.{1}", n++, handBrakeService.MovieOutputType == HandBrakeService.OutputType.MP4 ? "mp4" : "mkv");
+                        jobRunner.AddJob(new EncodeMovieJob(handBrakeService, driveName, cleanTitle, title.TitleIndex, false));
+                    }
                 }
                 return true;
             }

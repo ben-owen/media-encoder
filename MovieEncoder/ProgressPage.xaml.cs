@@ -28,7 +28,7 @@ namespace MovieEncoder
         private Job _currentJob;
 
         private readonly ProgressReporter ProgressReporter;
-        private System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        private readonly System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -41,6 +41,7 @@ namespace MovieEncoder
         {
             ProgressReporter = ((App)Application.Current).ProgressReporter;
             ProgressReporter.PropertyChanged += PropertyReporter_PropertyChanged;
+            stopwatch.Start();
 
             InitializeComponent();
 
@@ -79,6 +80,10 @@ namespace MovieEncoder
                             if (item != null && item.Content == job)
                             {
                                 item.BringIntoView();
+                            } 
+                            else
+                            {
+                                System.Diagnostics.Debug.Fail("No Scrolling");
                             }
                         }
                         _currentJob = job;
@@ -88,6 +93,12 @@ namespace MovieEncoder
             else if (e.PropertyName == "Shutdown")
             {
                 OnPropertyChanged("RunButtonString");
+            }
+            else if (e.PropertyName == "LogDocument")
+            {
+                Dispatcher.Invoke(new Action(() => {
+                    LogRichTextBox.ScrollToEnd();
+                }));
             }
         }
 
@@ -104,13 +115,7 @@ namespace MovieEncoder
             OnPropertyChanged("RunButtonString");
         }
 
-        private void LogTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            Dispatcher.BeginInvoke(new Action(() => {
-                ((RichTextBox)sender).ScrollToEnd();
-            }));
-        }
-
+  
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -123,9 +128,9 @@ namespace MovieEncoder
 
         private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (sender is ListBoxItem)
+            if (sender is ListBoxItem item)
             {
-                Job job = (Job)((ListBoxItem)sender).Content;
+                Job job = (Job)item.Content;
                 if (job != null)
                 {
                     // scroll to the log entries

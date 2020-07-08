@@ -502,9 +502,11 @@ namespace MovieEncoder
                     int mainFeature = jTitleSet.MainFeature;
                     foreach (HBTitleSet.TitleListData jTitle in jTitleSet.TitleList)
                     {
-                        DiskTitle diskTitle = new DiskTitle();
-                        diskTitle.TitleName = jTitle.Name;
-                        diskTitle.FullMKVPath = jTitle.Path;
+                        DiskTitle diskTitle = new DiskTitle
+                        {
+                            TitleName = jTitle.Name,
+                            FullMKVPath = jTitle.Path
+                        };
                         diskTitle.FileName = Path.GetFileName(diskTitle.FullMKVPath);
                         diskTitle.TitleIndex = jTitle.Index;
                         if (mainFeature == -1 || diskTitle.TitleIndex == mainFeature)

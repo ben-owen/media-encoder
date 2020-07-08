@@ -53,6 +53,12 @@ namespace MovieEncoder
             set { Properties.Settings.Default.GlobalBackupMethod = value.ToString(); Properties.Settings.Default.Save(); }
         }
 
+        public int GlobalMinMovieLen
+        {
+            get { return Properties.Settings.Default.GlobalMinMovieLen; }
+            set { Properties.Settings.Default.GlobalMinMovieLen = value; Properties.Settings.Default.Save(); }
+        }
+
         public bool MakeMkvKeepFiles
         {
             get { return Properties.Settings.Default.MakeMkvKeepFiles; }
@@ -143,11 +149,11 @@ namespace MovieEncoder
                         Job job = null;
                         if (GlobalBackupMethod == BackupMode.MakeMKV)
                         {
-                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, (string)driveInfo.Name, MakeMkvKeepFiles);
+                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, (string)driveInfo.Name, MakeMkvKeepFiles, GlobalMinMovieLen);
                         }
                         else if (GlobalBackupMethod == BackupMode.HandBrake)
                         {
-                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)driveInfo.Name.Replace("\\", ""), GlobalBackupAll);
+                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)driveInfo.Name.Replace("\\", ""), GlobalBackupAll, GlobalMinMovieLen);
                         }
 
                         if (job != null)
@@ -174,8 +180,10 @@ namespace MovieEncoder
 
             progressReporter.Shutdown = false;
 
-            jobThread = new Thread(new ThreadStart(JobRunner));
-            jobThread.Name = "JobRunner";
+            jobThread = new Thread(new ThreadStart(JobRunner))
+            {
+                Name = "JobRunner"
+            };
             jobThread.Start();
         }
 
@@ -352,11 +360,11 @@ namespace MovieEncoder
                         Job job = null;
                         if (GlobalBackupMethod == BackupMode.MakeMKV)
                         {
-                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, (string)mbo.Properties["DeviceID"].Value, MakeMkvKeepFiles);
+                            job = new BackupDiskMakeMKVJob(makeMKVService, handBrakeService, (string)mbo.Properties["DeviceID"].Value, MakeMkvKeepFiles, GlobalMinMovieLen);
                         }
                         else if (GlobalBackupMethod == BackupMode.HandBrake)
                         {
-                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)mbo.Properties["DeviceID"].Value.ToString().Replace("\\", ""), GlobalBackupAll);
+                            job = new BackupDiskHandBrakeJob(handBrakeService, (string)mbo.Properties["DeviceID"].Value.ToString().Replace("\\", ""), GlobalBackupAll, GlobalMinMovieLen);
                         }
                         if (job != null)
                         {

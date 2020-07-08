@@ -32,7 +32,6 @@ namespace MovieEncoder
     {
         internal readonly EncoderService EncoderService = new EncoderService();
         internal readonly ProgressReporter ProgressReporter = new ProgressReporter();
-        private Mutex myMutex;
 
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool SetForegroundWindow(IntPtr windowHandle);
@@ -50,8 +49,7 @@ namespace MovieEncoder
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            bool aIsNewInstance = false;
-            myMutex = new Mutex(true, "MovieEncoderApplication", out aIsNewInstance);
+            new Mutex(true, "MovieEncoderApplication", out bool aIsNewInstance);
             if (!aIsNewInstance)
             {
                 // Bring main window to front
