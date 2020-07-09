@@ -205,5 +205,11 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="bobines-video-icon16.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="bobines-video-icon96.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

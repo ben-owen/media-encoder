@@ -7,7 +7,6 @@ Backup and re-encode bulk movies using projects MakeMKV and HandBrake
 - Support to keep HandBrake source files.
   - Possible cache file / db to note which files have been enoded so not to attempt on startup.
 - Save process output to file.
-- Put Handbrake backups into own folder.
 
 ## [1.0.1] - Unreleased
 ### Added
