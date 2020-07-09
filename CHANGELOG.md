@@ -7,8 +7,9 @@ Backup and re-encode bulk movies using projects MakeMKV and HandBrake
 - Support to keep HandBrake source files.
   - Possible cache file / db to note which files have been enoded so not to attempt on startup.
 - Save process output to file.
+- ITTT type workflows
 
-## [1.0.1] - Unreleased
+## [1.0.1] - 2020-07-09
 ### Added
 - Prevent opening multiple application instances.
 - Clear log command.

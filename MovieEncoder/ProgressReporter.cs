@@ -134,8 +134,6 @@ namespace MovieEncoder
             set { _remaining = value; OnPropertyChanged(); }
         }
 
-        public Dispatcher Dispatcher { get; internal set; }
-
         public event PropertyChangedEventHandler PropertyChanged;
 
         public ProgressReporter()
@@ -313,6 +311,10 @@ namespace MovieEncoder
         {
             Action callback = new Action(() =>
                                {
+                                   // only add if there is a row
+                                   if (_logTable.RowGroups[0].Rows.Count == 0)
+                                       return;
+
                                    TableRow row = new TableRow
                                    {
                                        FontSize = 0.004,
